@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae1d683d8aace9a42b9c22b25363b1ec, type: 3}
+  m_Name: Config
+  m_EditorClassIdentifier: 
+  serverUrl: 
+  mockServerLatency: 0.2
+  initTargetCount: 10
+  newTargetInterval: 3
+  newTargetCount: 3
+  mockPlayerShootInterval: 1
+  roomId: 
+  localPlayerId: 0
+  gameTimeout: 60
+  scoreShakeScale: 1.5
+  scoreShakeSpeed: 2
+  angleRange: 160
+  cannonRotationSpeed: 90
+  laserWidth: 0.6
+  laserFadeSpeed: 5
+  laserMaterial: {fileID: 2100000, guid: 076523129d70ac741ac7ee54e6723bff, type: 2}
+  laserPowerGrowSpeed: 2
+  laserPowerMoveSpeed: 4
+  laserPowerMoveRange: 0.03
+  initTargetGrowSpeed: 5
+  targetFloatSpeed: 4
+  targetFloatRange: 0.03
+  deadTargetRotateSpeed: 180
+  deadTargetUpForce: 10
+  targetPrefab: {fileID: 7190946530104873606, guid: 8afb782767591c946acec78f925ff873, type: 3}
+  deadTargetPrefab: {fileID: 3501078755375035353, guid: 3099684a658df1b4ab4d630cd246b0da, type: 3}

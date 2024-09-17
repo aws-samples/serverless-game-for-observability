@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+  build:
+    commands:
+      - chmod +x create-alias.sh
+      - ./create-alias.sh
