@@ -7,7 +7,10 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 
 
 export class StepFunction {
-    constructor ( scope : Construct,  id: string, functionArn: string, loop: number ){
+
+    stateMachineArn:string
+
+    constructor ( scope : Construct,  id: string, functionArn: string, props: any){
         let chain = new sfn.Wait(scope, 'Wait', {time: sfn.WaitTime.duration(cdk.Duration.seconds(8))})
         .next(new tasks.LambdaInvoke(scope, 'Target', {
             lambdaFunction: lambda.Function.fromFunctionArn(scope, 'TargetsFunction', functionArn),
@@ -15,7 +18,7 @@ export class StepFunction {
             retryOnServiceExceptions: true
         }));
 
-        for (let i = 1; i < loop; i ++) {
+        for (let i = 1; i < props.targetsFrequency; i ++) {
             chain = chain.next(new sfn.Wait(scope, `Wait${i}`, {time: sfn.WaitTime.duration(cdk.Duration.seconds(8))})).next(new tasks.LambdaInvoke(scope, `Target${i}`, {
                 lambdaFunction: lambda.Function.fromFunctionArn(scope, `TargetsFunction${i}`, functionArn),
                 outputPath: '$.Payload',
@@ -28,7 +31,7 @@ export class StepFunction {
             definitionBody: 
             sfn.DefinitionBody.fromChainable(chain),
         })
-
+        this.stateMachineArn = stateMachine.stateMachineArn
         // Assign the IAM role to the Step Function state machine
         stateMachine.role.addToPrincipalPolicy(
             new iam.PolicyStatement({
@@ -36,7 +39,6 @@ export class StepFunction {
             resources: [functionArn],
             }),
     );
-    
     }
 }
 
