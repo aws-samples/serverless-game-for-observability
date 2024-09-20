@@ -3,30 +3,32 @@ import { IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { StepFunction } from './step-functions';
 import path = require('path');
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class LambdaAPIs {
 
-  lambdaFunctions: Map<string, cdk.aws_lambda.Function> = new Map();
+  lambdaFunctions: any;
 
   constructor(scope: Construct, id: string, props?: any) {
         
     const lambdaRole = this.createLambdaRoles(scope, id);
 
-    const functions = this.createFunctions(scope, id, lambdaRole, props);
+    this.createFunctions(scope, id, lambdaRole, props);
     
-    this.createApiGateway(scope, id, functions[0], functions[1], functions[2]);
+    this.createApiGateway(scope, id, this.lambdaFunctions['default'], this.lambdaFunctions['connect'], this.lambdaFunctions['disconnect'], this.lambdaFunctions['authorizer'], props);
 
-    const stepFunction = new StepFunction(scope, id, functions[4].functionArn, props);
+    const stepFunction = new StepFunction(scope, id, this.lambdaFunctions['targets'].functionArn, props);
 
     props['stateMachineArn'] = stepFunction.stateMachineArn;
     
-    functions.push(this.createLogicFunction(scope, id, lambdaRole, props));
+    this.lambdaFunctions['logic'] = this.createLogicFunction(scope, id, lambdaRole, props);
 
   }
 
   // function to create API Gateway
-  createApiGateway(scope: Construct, id: string, defaultFunction: IFunction, connectFunction: IFunction, disconnectFunction: IFunction) {
+  createApiGateway(scope: Construct, id: string, defaultFunction: IFunction, connectFunction: IFunction, disconnectFunction: IFunction, authorizerFunction: IFunction, props: any) {
     const defaultIntegration = new cdk.aws_apigatewayv2_integrations.WebSocketLambdaIntegration(id + '_GameApi_integration_default', defaultFunction)
     const connectIntegration = new cdk.aws_apigatewayv2_integrations.WebSocketLambdaIntegration(id + '_GameApi_integration_connect', connectFunction)
     const disconnectIntegration = new cdk.aws_apigatewayv2_integrations.WebSocketLambdaIntegration(id + '_GameApi_integration_disconnect', disconnectFunction)
@@ -46,15 +48,28 @@ export class LambdaAPIs {
       
     });
 
+    // create stage for api gateway integration
+    new cdk.aws_apigatewayv2.WebSocketStage(scope, id + '_GameApi_Stage', {
+      webSocketApi: api,
+      stageName: 'demo',
+      autoDeploy: true,
+    });
+
     const webSocketAuthorizer = new cdk.aws_apigatewayv2.WebSocketAuthorizer(scope, id + '_Authorizer', {
       identitySource: ['route.request.querystring.Auth'],
       type: cdk.aws_apigatewayv2.WebSocketAuthorizerType.LAMBDA,
       webSocketApi: api,
       
       // the properties below are optional
-      authorizerName: 'authorizerName',
-      authorizerUri: 'authorizerUri',
+      authorizerName: 'basic-authorizer',
+      authorizerUri: `arn:aws:apigateway:${props.region}:lambda:path/2015-03-31/functions/${authorizerFunction.functionArn}/invocations`
     });
+    // grant authorization to apigateway 'api' to call the authorization
+    authorizerFunction.addPermission('PermitAPIGInvocation', {
+      principal: new ServicePrincipal('apigateway.amazonaws.com'),
+      sourceArn: api.arnForExecuteApi('*')
+    });
+
   }
 
   createLambdaRoles(scope: Construct, id: string){
@@ -69,6 +84,12 @@ export class LambdaAPIs {
     lambdaRole.addManagedPolicy(cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSQSFullAccess'));
     lambdaRole.addManagedPolicy(cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess'));
     lambdaRole.addManagedPolicy(cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSNSFullAccess'));
+    lambdaRole.addManagedPolicy(cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AWSStepFunctionsFullAccess'));
+    lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
+      effect: cdk.aws_iam.Effect.ALLOW,
+      actions: ['execute-api:ManageConnections'],
+      resources: ['*']
+    }));
 
     return lambdaRole;
   }
@@ -94,6 +115,7 @@ export class LambdaAPIs {
         'DEFAULT_REGION': props.region
       }
     });
+
     // create alias for the default Function
       // new cdk.aws_lambda.Alias(scope, 'DefaultFunctionAlias', {
       //   aliasName: 'prod',
@@ -173,8 +195,18 @@ export class LambdaAPIs {
       environment: {
       }
     });
-
-    return [defaultFunction, connectFunction, disconnectFunction, authorizerFunction, targetsFunction]
+    defaultFunction.addEventSourceMapping('DefaultFunctionEventSourceMapping', {
+      eventSourceArn: props.targetQueueArn,
+      enabled: true,
+      batchSize: 1,
+    })
+    this.lambdaFunctions = {
+      'default': defaultFunction,
+      'connect': connectFunction,
+      'disconnect': disconnectFunction,
+      'authorizer': authorizerFunction,
+      'targets': targetsFunction
+    }
   }
 
   createLogicFunction(scope: Construct, id: string, role: cdk.aws_iam.Role, props: any){
@@ -200,9 +232,16 @@ export class LambdaAPIs {
         'STATE_MACHINE_ARN': props.stateMachineArn
       }
     });
-
+    logicFunction.addEventSourceMapping('LogicFunctionEventSourceMapping', {
+      eventSourceArn: props.gameQueueArn,
+      enabled: true,
+      batchSize: 1,
+    })
     return logicFunction;
 
   }
 
+  getFunctions(): any {
+    return this.lambdaFunctions;
+  }
 }

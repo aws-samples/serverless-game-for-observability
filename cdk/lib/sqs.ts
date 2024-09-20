@@ -3,7 +3,8 @@ import { Construct } from 'constructs'
 import * as sqs from 'aws-cdk-lib/aws-sqs'
 
 export class Queues {
-    queues: Map<string, string> = new Map();
+    queueUrls: Map<string, string> = new Map();
+    queueArns: Map<string, string> = new Map();
     constructor(scope: Construct, id: string, props?: any) {
         // create a fifo queue
         const game_queue_dl = new sqs.Queue(scope, 'FifoQueueDl', {
@@ -46,12 +47,19 @@ export class Queues {
             deliveryDelay: cdk.Duration.seconds(5)
         })
 
-        this.queues.set("game_queue", game_queue.queueUrl)
-        this.queues.set("target_queue", target_queue.queueUrl)
+        this.queueUrls.set("game_queue", game_queue.queueUrl)
+        this.queueUrls.set("target_queue", target_queue.queueUrl)
+        this.queueArns.set("game_queue", game_queue.queueArn)
+        this.queueArns.set("target_queue", target_queue.queueArn)
+    }
+
+    // function to return queueUrls
+    getQueueUrls(): Map<string, string> {
+        return this.queueUrls
     }
 
     // function to return queues
-    getQueues(): Map<string, string> {
-        return this.queues
+    getQueueArns(): Map<string, string> {
+        return this.queueArns
     }
 }
