@@ -1,7 +1,7 @@
 const async = require('async')
 const AWSXRay = require('aws-xray-sdk')
-const AWS = AWSXRay.captureAWS(require('aws-sdk'))
 const process = require('process')
+const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const fifoQueueUrl = process.env.FIFO_QUEUE_URL
 // const delayedQueueUrl = process.env.DELAYED_QUEUE_URL
 const fifoQueueGroupId = process.env.FIFO_QUEUE_GROUP_ID

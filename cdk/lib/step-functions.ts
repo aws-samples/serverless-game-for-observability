@@ -4,6 +4,7 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Tracing } from 'aws-cdk-lib/aws-lambda';
 
 
 export class StepFunction {
@@ -28,6 +29,7 @@ export class StepFunction {
 
         const stateMachine = new sfn.StateMachine(scope, 'GameStateMachine', {
             stateMachineName: id + "-my-state-machine",
+            tracingEnabled: props.enableXray == Tracing.ACTIVE,
             definitionBody: 
             sfn.DefinitionBody.fromChainable(chain),
         })

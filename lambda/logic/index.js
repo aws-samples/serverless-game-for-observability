@@ -1,6 +1,6 @@
 const async = require("async");
 const AWSXRay = require("aws-xray-sdk");
-const AWS = AWSXRay.captureAWS(require("aws-sdk"));
+const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
 

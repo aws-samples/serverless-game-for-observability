@@ -2,6 +2,8 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { CdkStack } from '../lib/cdk-stack';
+import { Tracing } from 'aws-cdk-lib/aws-lambda';
+import * as console from 'console'
 
 const app = new cdk.App();
 new CdkStack(app, 'ServerlessGameDemoStack', {

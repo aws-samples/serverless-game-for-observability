@@ -7,6 +7,22 @@ Be sure to:
 * Change the title in this README
 * Edit your repository description on GitHub
 
+Variables:
+
+1. enable active tracing for Lambda, StepFucntion
+
+    ```shell
+    export ENABLE_XRAY=ACTIVE
+    ```
+
+2. enable X-Ray in code
+
+    ```shell
+    export ENABLE_XRAY_SDK=true
+    ```
+
+3. 
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.

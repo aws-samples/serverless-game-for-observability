@@ -18,6 +18,7 @@ export class CdkStack extends cdk.Stack {
 
     const lambdaApi = new LambdaAPIs(this, Constants.templatePrefixName, {
       enableXray: Constants.enableXray,
+      enableXraySdk: Constants.enableXraySdk,
       targetsFrequency: Constants.targetsFrequency,
       targetsPerBatch: Constants.targetsPerBatch,
       gameQueue: queues.getQueueUrls().get('game_queue'),

@@ -1,6 +1,6 @@
 const async = require("async");
 const AWSXRay = require("aws-xray-sdk");
-const AWS = AWSXRay.captureAWS(require("aws-sdk"));
+const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 
 const delayedQueueUrl = process.env.DELAYED_QUEUE_URL;
 const targetsDelayedSecond = process.env.TARGET_DELAYED_SECONDS;

@@ -107,6 +107,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_default',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
@@ -133,6 +134,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_connect',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
@@ -152,6 +154,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_disconnect',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
@@ -171,6 +174,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_targets',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
@@ -193,6 +197,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_authorizer',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
       }
     });
     defaultFunction.addEventSourceMapping('DefaultFunctionEventSourceMapping', {
@@ -221,6 +226,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_logic',
       environment: {
+        'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
