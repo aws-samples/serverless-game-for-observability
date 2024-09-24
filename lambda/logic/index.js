@@ -3,6 +3,11 @@ const AWSXRay = require("aws-xray-sdk");
 const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
+const { Logger } = require('@aws-lambda-powertools/logger');
+
+const logger = new Logger({ serviceName: 'serverless-game-logic' });
+
+//function log()
 
 const laserWidth = process.env.LaserWidth || 0.6;
 const mosWidth = process.env.MosquetoWidth || 1.0;
@@ -20,7 +25,8 @@ const sqs = initSqs();
 const ddb = initDynamoDB();
 const sfn = initSFN();
 
-exports.handler = function (event) {
+exports.handler = function (event, context) {
+    logger.info('Hello World');
     console.log(event);
     records = event["Records"];
     for (let i = 0; i < records.length; i++) {
