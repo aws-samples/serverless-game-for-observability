@@ -28,6 +28,7 @@ export class CdkStack extends cdk.Stack {
       targetQueueArn: queues.getQueueArns().get('target_queue'),
       playerTable: dynamodb.playerTableName,
       sessionTable: dynamodb.sessionTableName,
+      logLevel: Constants.logLevel,
       region: this.region
     });
     

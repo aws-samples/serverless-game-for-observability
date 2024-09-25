@@ -3,11 +3,49 @@ const AWSXRay = require("aws-xray-sdk");
 const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
+
+// log section
 const { Logger } = require('@aws-lambda-powertools/logger');
 
 const logger = new Logger({ serviceName: 'serverless-game-logic' });
 
-//function log()
+const usePowertool = process.env.USE_POWERTOOL == "true"? true : false;
+const loglevel = process.env.POWERTOOLS_LOG_LEVEL || "DEBUG";
+const loglevelMap = {
+    "SILENT": 5,
+    "DEBUG": 0,
+    "INFO": 1,
+    "WARN": 2,
+    "ERROR": 3,
+    "CRITICAL": 4
+};
+
+function logDebug(message, ...optionalParams){
+    if(usePowertool){
+        logger.debug(message, ...optionalParams);
+    }
+    else {
+        console.debug(message, ...optionalParams);
+    }
+}
+
+function logInfo(message, ...optionalParams){
+    if (usePowertool){
+        logger.info(message, ...optionalParams);
+    }
+    else {
+        console.info(message, ...optionalParams);
+    }
+}
+
+function logError(message, ...optionalParams){
+    if (usePowertool){
+        logger.error(message, ...optionalParams);
+    }
+    else {
+        console.error(message, ...optionalParams);
+    }
+}
 
 const laserWidth = process.env.LaserWidth || 0.6;
 const mosWidth = process.env.MosquetoWidth || 1.0;
@@ -26,8 +64,8 @@ const ddb = initDynamoDB();
 const sfn = initSFN();
 
 exports.handler = function (event, context) {
-    logger.info('Hello World');
-    console.log(event);
+    logInfo('Welcome to the logic function');
+    logDebug(event, context);
     records = event["Records"];
     for (let i = 0; i < records.length; i++) {
         record = records[i];
@@ -42,23 +80,23 @@ exports.handler = function (event, context) {
 };
 
 function handleEvent(record) {
-    console.log("record:", record);
+    logDebug("record:", record);
     body = JSON.parse(record.body);
     switch (body.action) {
         case "start":
-            console.log("action start");
+            logDebug("action start");
             startGame(body);
             break;
         case "newtargets":
-            console.log("action newtargets");
+            logDebug("action newtargets");
             handleNewTargets(body);
             break;
         case "stop":
-            console.log("action stop");
+            logDebug("action stop");
             stopGame(body);
             break;
         case "shoot":
-            console.log("action shoot");
+            logDebug("action shoot");
             handleShoot(body);
             break;
         default:
@@ -67,13 +105,13 @@ function handleEvent(record) {
 }
 
 function handleNewTargets(body) {
-    console.log("body", body);
+    logDebug("body", body);
     let request = body.data;
     updatedTargets = null;
     async.waterfall(
         [
             function (callback) {
-                console.log("read targets");
+                logDebug("read targets");
                 readRecord(
                     ddb,
                     gameSessionTableName,
@@ -82,10 +120,10 @@ function handleNewTargets(body) {
                     },
                     function (err, data) {
                         if (err) {
-                            console.log(err);
+                            logError(err);
                             callback(err, null);
                         } else {
-                            console.log(data);
+                            logDebug(data);
                             callback(null, data.Item);
                         }
                     }
@@ -96,15 +134,15 @@ function handleNewTargets(body) {
                     callback(new Error("already stopped"), null);
                     return;
                 }
-                console.log("update targets");
+                logDebug("update targets");
                 updatedTargets = JSON.parse(data.targets.S).concat(JSON.parse(request.targets));
                 data.targets.S = JSON.stringify(updatedTargets);
                 updateRecord(ddb, gameSessionTableName, data, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data);
                     }
                 });
@@ -112,19 +150,19 @@ function handleNewTargets(body) {
             function (data, callback) {
                 sendTargetUpdate(request, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data);
                     }
                 });
             },
         ],
         function (err, result) {
-            console.log(err, result);
+            logError(err, result);
             if (!err) {
-                console.log("create ok");
+                logDebug("create ok");
             }
         }
     );
@@ -135,7 +173,7 @@ function handleShoot(body) {
     async.waterfall(
         [
             function (callback) {
-                console.log("get targets");
+                logDebug("get targets");
                 readRecord(
                     ddb,
                     playerTableName,
@@ -144,10 +182,10 @@ function handleShoot(body) {
                     },
                     function (err, data) {
                         if (err) {
-                            console.log(err);
+                            logError(err);
                             callback(err, null);
                         } else {
-                            console.log(data);
+                            logDebug(data);
                             shootItem.player = data.Item.host.N;
                             callback(null, data.Item);
                         }
@@ -155,7 +193,7 @@ function handleShoot(body) {
                 );
             },
             function (data, callback) {
-                console.log(data);
+                logDebug(data);
                 readRecord(
                     ddb,
                     gameSessionTableName,
@@ -164,10 +202,10 @@ function handleShoot(body) {
                     },
                     function (err, data) {
                         if (err) {
-                            console.log(err);
+                            logError(err);
                             callback(err, null);
                         } else {
-                            console.log(data);
+                            logDebug(data);
                             callback(null, data.Item);
                         }
                     }
@@ -186,10 +224,10 @@ function handleShoot(body) {
                 dataRecord = data;
                 updateRecord(ddb, gameSessionTableName, data, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(dataRecord);
+                        logDebug(dataRecord);
                         callback(null, dataRecord);
                     }
                 });
@@ -200,22 +238,24 @@ function handleShoot(body) {
                 shootInfo.stage = shootItem.stage;
                 shootInfo.domain = shootItem.domain;
                 shootInfo.hit = shootItem.hit;
-                console.log("shootInfo", shootInfo);
+                logDebug("shootInfo", shootInfo);
                 updateShoot(shootInfo, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data.Item);
                     }
                 });
             },
         ],
         function (err, result) {
-            console.log(err, result);
             if (!err) {
-                console.log("create ok");
+                logDebug("create ok", result);
+            }
+            else {
+                logError(err);
             }
         }
     );
@@ -255,21 +295,19 @@ function canHitTarget(originX, originY, angle, targetX, targetY) {
 
     var distance = Math.sqrt(newTargetX * newTargetX + newTargetY * newTargetY);
     var targetAngle = Math.atan(newTargetY / newTargetX);
-    // 如果计算出来的targetAngle < 0 则表明角度大于90度
+    // If the calculated targetAngle is less than 0, it means that the angle is greater than 90 degrees.
     if (targetAngle < 0) {
         targetAngle = Math.PI + targetAngle;
     }
-    // 发炮角度转换
+    // Firing angle conversion
     var shootAngle = (angle * Math.PI) / 180;
 
     var diffAngle = Math.abs(targetAngle - shootAngle);
-    // 角度相差超过90度以上，判定不命中
+    // If the angle difference exceeds 90 degrees, it is determined as a miss.
     if (diffAngle >= 0.5 * Math.PI) {
         return false;
     }
     var targetDisToPath = distance * Math.sin(diffAngle);
-    //console.log("shoot param", originX, originY, angle, targetX, targetY)
-    //console.log('width', laserWidth, mosWidth, 'angles', targetAngle/Math.PI * 180, angle, diffAngle/Math.PI*180, "x and y", newTargetX, newTargetY, targetDisToPath)
     return targetDisToPath <= laserWidth / 2 + mosWidth / 2;
 }
 
@@ -288,13 +326,13 @@ function startGame(body) {
     async.waterfall(
         [
             function (callback) {
-                console.log("update targets");
+                logDebug("update targets");
                 updateRecord(ddb, gameSessionTableName, body.data, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data);
                     }
                 });
@@ -313,7 +351,7 @@ function startGame(body) {
                 );
             },
             function (data, callback) {
-                console.log("send delayed stop", data);
+                logDebug("send delayed stop", data);
                 sendDelayedMessage(
                     sqs,
                     delayedQueueUrl,
@@ -339,19 +377,19 @@ function startGame(body) {
             function (data, callback) {
                 sendStart(body, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data);
                     }
                 });
             },
         ],
         function (err, result) {
-            console.log(err, result);
+            logError(err, result);
             if (!err) {
-                console.log("create ok");
+                logDebug("create ok");
             }
         }
     );
@@ -360,7 +398,7 @@ function stopGame(body) {
     async.waterfall(
         [
             function (callback) {
-                console.log("get player status", body);
+                logDebug("get player status", body);
                 readRecord(
                     ddb,
                     gameSessionTableName,
@@ -369,10 +407,10 @@ function stopGame(body) {
                     },
                     function (err, data) {
                         if (err) {
-                            console.log(err);
+                            logError(err);
                             callback(err, null);
                         } else {
-                            console.log(data);
+                            logDebug(data);
                             callback(null, data.Item);
                         }
                     }
@@ -394,10 +432,10 @@ function stopGame(body) {
                 body.data.winner = playerStatus["0"] >= playerStatus["1"] ? 0 : 1;
                 sendStop(body, function (err, data) {
                     if (err) {
-                        console.log(err);
+                        logError(err);
                         callback(err, null);
                     } else {
-                        console.log(data);
+                        logDebug(data);
                         callback(null, data);
                     }
                 });
@@ -407,9 +445,9 @@ function stopGame(body) {
             stopStateMachine(stateMachineArn, callback);
         },
         function (err, result) {
-            console.log(err, result);
+            logError(err, result);
             if (!err) {
-                console.log("create ok");
+                logDebug("create ok");
             }
         }
     );
@@ -418,19 +456,19 @@ function stopGame(body) {
 function sendStart(body, callback) {
     const domain = body.domain;
     const stage = body.stage;
-    console.log(domain, stage, body);
+    logDebug(domain, stage, body);
 
     const callbackUrl = `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(body.data.connectionIds.S);
-    console.log(ids);
+    logDebug(ids);
     items = enhanceTargets(ids, JSON.parse(body.data.targets.S), client);
     async.each(items, notifyStart, function (err) {
         if (err) {
-            console.log(err);
+            logError(err);
             callback(err, null);
         } else {
-            console.log("sendStart done");
+            logDebug("sendStart done");
             callback(null, "done");
         }
     });
@@ -439,19 +477,19 @@ function sendStart(body, callback) {
 function sendTargetUpdate(request, callback) {
     const domain = request.domain;
     const stage = request.stage;
-    console.log(domain, stage, request);
+    logDebug(domain, stage, request);
 
     const callbackUrl = `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(request.ids);
-    console.log(ids);
+    logDebug(ids);
     items = enhanceTargets(ids, JSON.parse(request.targets), client);
     async.each(items, notifyNewTargets, function (err) {
         if (err) {
-            console.log(err);
+            logError(err);
             callback(err, null);
         } else {
-            console.log("sendTargetUpdate done");
+            logDebug("sendTargetUpdate done");
             callback(null, "done");
         }
     });
@@ -473,19 +511,19 @@ function sendStop(body, callback) {
     data = body.data;
     const domain = data.domain;
     const stage = data.stage;
-    console.log(domain, stage, data);
+    logDebug(domain, stage, data);
 
     const callbackUrl = `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(data.ids);
-    console.log(ids);
+    logDebug(ids);
     items = enhanceStop(ids, data, client);
     async.each(items, notifyStop, function (err) {
         if (err) {
-            console.log(err);
+            logError(err);
             callback(err, null);
         } else {
-            console.log("sendStop done");
+            logDebug("sendStop done");
             callback(null, "done");
         }
     });
@@ -504,22 +542,22 @@ function enhanceStop(ids, data, client) {
 }
 
 function updateShoot(data, callback) {
-    console.log("updateShoot data", data);
+    logDebug("updateShoot data", data);
     const domain = data.domain;
     const stage = data.stage;
-    console.log(domain, stage, data);
+    logDebug(domain, stage, data);
 
     const callbackUrl = `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = data.connectionIds;
-    console.log(ids);
+    logDebug(ids);
     items = enhanceShootInfo(ids, client, data);
     async.each(items, notifyShoot, function (err) {
         if (err) {
-            console.log(err);
+            logError(err);
             callback(err, null);
         } else {
-            console.log("updateShoot done");
+            logDebug("updateShoot done");
             callback(null, "done");
         }
     });
@@ -544,7 +582,7 @@ function enhanceShootInfo(ids, client, data) {
 }
 
 function notifyStart(item, cb) {
-    console.log("notify start", item.targets);
+    logDebug("notify start", item.targets);
     const requestParams = {
         ConnectionId: item.id,
         Data: JSON.stringify({
@@ -554,7 +592,7 @@ function notifyStart(item, cb) {
     };
     const command = new PostToConnectionCommand(requestParams);
     item.client.send(command, function (err, data) {
-        console.log(err, data);
+        logDebug(err, data);
         if (err) {
             return cb(err, null);
         }
@@ -563,7 +601,7 @@ function notifyStart(item, cb) {
 }
 
 function notifyNewTargets(item, cb) {
-    console.log(item);
+    logDebug(item);
     const requestParams = {
         ConnectionId: item.id,
         Data: JSON.stringify({
@@ -573,7 +611,7 @@ function notifyNewTargets(item, cb) {
     };
     const command = new PostToConnectionCommand(requestParams);
     item.client.send(command, function (err, data) {
-        console.log(err, data);
+        logDebug(err, data);
         if (err) {
             return cb(err, null);
         }
@@ -582,7 +620,7 @@ function notifyNewTargets(item, cb) {
 }
 
 function notifyStop(item, cb) {
-    console.log(item);
+    logDebug(item);
     winner = { winner: item.winner };
     const requestParams = {
         ConnectionId: item.id,
@@ -593,7 +631,7 @@ function notifyStop(item, cb) {
     };
     const command = new PostToConnectionCommand(requestParams);
     item.client.send(command, function (err, data) {
-        console.log(err, data);
+        logDebug(err, data);
         if (err) {
             return cb(err, null);
         }
@@ -602,7 +640,7 @@ function notifyStop(item, cb) {
 }
 
 function notifyShoot(item, cb) {
-    console.log(item);
+    logDebug(item);
     const requestParams = {
         ConnectionId: item.id,
         Data: JSON.stringify({
@@ -620,7 +658,7 @@ function notifyShoot(item, cb) {
     };
     const command = new PostToConnectionCommand(requestParams);
     item.client.send(command, function (err, data) {
-        console.log(err, data);
+        logDebug(err, data);
         if (err) {
             return cb(err, null);
         }

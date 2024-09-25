@@ -1,6 +1,9 @@
 #!/bin/bash
 
-cd lambda
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+echo "Script directory path: $script_dir"
+
+cd "$script_dir/lambda"
 
 cd connect
 npm install

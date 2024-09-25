@@ -21,7 +21,11 @@ Variables:
     export ENABLE_XRAY_SDK=true
     ```
 
-3. 
+3. change log level
+
+   ```shell
+   LOG_LEVEL=DEBUG
+   ```
 
 ## Security
 
