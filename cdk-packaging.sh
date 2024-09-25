@@ -23,8 +23,7 @@ npm install
 zip -r code.zip .
 
 cd ../targets
-npm install
-zip -r code.zip .
+make
 
 cd ../authorizer
 zip -r code.zip .

@@ -1,9 +1,8 @@
 #!/bin/bash
 
-npm install 
+make
 
-zip -r targets.zip .
-target_version=$(aws lambda update-function-code --function-name $FUNCTION_NAME	--zip-file fileb://targets.zip --publish | jq -r '.Version')
+target_version=$(aws lambda update-function-code --function-name $FUNCTION_NAME	--zip-file fileb://code.zip --publish | jq -r '.Version')
 alias_exists=$(aws lambda get-alias --function-name $FUNCTION_NAME --name $ALIAS_NAME 2>/dev/null)
 
 

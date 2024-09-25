@@ -173,9 +173,9 @@ export class LambdaAPIs {
 
     // create targets generation function
     const targetsFunction = new cdk.aws_lambda.Function(scope, id + '_targets', {
-      runtime: cdk.aws_lambda.Runtime.NODEJS_LATEST,
+      runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2023,
       code: cdk.aws_lambda.Code.fromAsset(path.join(__dirname, '../../lambda/targets/code.zip')),
-      handler: 'index.handler',
+      handler: 'bootstrap',
       role: role,
       tracing: props.enableXray,
       applicationLogLevelV2: props.logLevel,
