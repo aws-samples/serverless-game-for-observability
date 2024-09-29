@@ -6,55 +6,47 @@ const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws
 
 // log section
 const { Logger } = require('@aws-lambda-powertools/logger');
+const { Tracer } = require('@aws-lambda-powertools/tracer');
+
 
 const logger = new Logger({ serviceName: 'serverless-game-logic' });
+const tracer = new Tracer();
 
 const usePowertool = process.env.USE_POWERTOOL == "true"? true : false;
-const loglevel = process.env.POWERTOOLS_LOG_LEVEL || "DEBUG";
-const loglevelMap = {
-    "SILENT": 5,
-    "DEBUG": 0,
-    "INFO": 1,
-    "WARN": 2,
-    "ERROR": 3,
-    "CRITICAL": 4
-};
+console.log("powertool enabled is ", usePowertool)
 
-function logDebug(message, ...optionalParams){
+function logDebug(message){
     if(usePowertool){
-        logger.debug(message, ...optionalParams);
+        logger.debug(message);
     }
     else {
-        console.debug(message, ...optionalParams);
+        console.debug(message);
     }
 }
 
-function logInfo(message, ...optionalParams){
+function logInfo(message){
     if (usePowertool){
-        logger.info(message, ...optionalParams);
+        logger.info(message);
     }
     else {
-        console.info(message, ...optionalParams);
+        console.info(message);
     }
 }
 
-function logError(message, ...optionalParams){
+function logError(message){
     if (usePowertool){
-        logger.error(message, ...optionalParams);
+        logger.error(message);
     }
     else {
-        console.error(message, ...optionalParams);
+        console.error(message);
     }
 }
 
 const laserWidth = process.env.LaserWidth || 0.6;
 const mosWidth = process.env.MosquetoWidth || 1.0;
 
-// const fifoQueueUrl = process.env.FIFO_QUEUE_URL
 const delayedQueueUrl = process.env.DELAYED_QUEUE_URL;
-const targetsDelayedSecond = process.env.TARGET_DELAYED_SECONDS;
 const targetsPerBatch = process.env.TARGET_PER_BATCH;
-// const fifoQueueGroupId = process.env.FIFO_QUEUE_GROUP_ID
 const playerTableName = process.env.PLAYER_TABLE_NAME;
 const gameSessionTableName = process.env.GAME_SESSION_TABLE_NAME;
 const defaultRegion = process.env.DEFAULT_REGION;
@@ -65,7 +57,7 @@ const sfn = initSFN();
 
 exports.handler = function (event, context) {
     logInfo('Welcome to the logic function');
-    logDebug(event, context);
+    logDebug(event);
     records = event["Records"];
     for (let i = 0; i < records.length; i++) {
         record = records[i];
@@ -76,6 +68,7 @@ exports.handler = function (event, context) {
         statusCode: 200,
         body: JSON.stringify("Hello from Logic!"),
     };
+    logInfo('leaving logic function');
     return response;
 };
 

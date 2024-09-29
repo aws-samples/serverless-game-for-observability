@@ -115,7 +115,8 @@ export class LambdaAPIs {
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
         'PLAYER_TABLE_NAME': props.playerTable,
         'GAME_SESSION_TABLE_NAME': props.sessionTable,
-        'DEFAULT_REGION': props.region
+        'DEFAULT_REGION': props.region,
+        'USE_POWERTOOL': props.usePowertool
       }
     });
 
@@ -144,7 +145,8 @@ export class LambdaAPIs {
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
         'PLAYER_TABLE_NAME': props.playerTable,
         'GAME_SESSION_TABLE_NAME': props.sessionTable,
-        'DEFAULT_REGION': props.region
+        'DEFAULT_REGION': props.region,
+        'USE_POWERTOOL': props.usePowertool
       }
     });
 
@@ -167,7 +169,8 @@ export class LambdaAPIs {
         'FIFO_QUEUE_GROUP_ID': props.gameQueueId,
         'PLAYER_TABLE_NAME': props.playerTable,
         'GAME_SESSION_TABLE_NAME': props.sessionTable,
-        'DEFAULT_REGION': props.region
+        'DEFAULT_REGION': props.region,
+        'USE_POWERTOOL': props.usePowertool
       }
     });
 
@@ -191,6 +194,7 @@ export class LambdaAPIs {
         'PLAYER_TABLE_NAME': props.playerTable,
         'GAME_SESSION_TABLE_NAME': props.sessionTable,
         'DEFAULT_REGION': props.region,
+        'USE_POWERTOOL': props.usePowertool,
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
       }
@@ -210,6 +214,7 @@ export class LambdaAPIs {
       functionName: id + '_authorizer',
       environment: {
         'ENABLE_XRAY_SDK': props.enableXraySdk,
+        'USE_POWERTOOL': props.usePowertool
       }
     });
     defaultFunction.addEventSourceMapping('DefaultFunctionEventSourceMapping', {
@@ -249,7 +254,8 @@ export class LambdaAPIs {
         'DEFAULT_REGION': props.region,
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
-        'STATE_MACHINE_ARN': props.stateMachineArn
+        'STATE_MACHINE_ARN': props.stateMachineArn,
+        'USE_POWERTOOL': props.usePowertool
       }
     });
     logicFunction.addEventSourceMapping('LogicFunctionEventSourceMapping', {

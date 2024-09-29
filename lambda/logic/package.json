@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "@aws-lambda-powertools/logger": "^2.8.0",
+        "@aws-lambda-powertools/tracer": "^2.8.0",
         "@aws-sdk/client-apigatewaymanagementapi": "",
         "@aws-sdk/client-sfn": "",
         "async": "",

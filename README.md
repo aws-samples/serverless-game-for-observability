@@ -24,8 +24,14 @@ Variables:
 3. change log level
 
    ```shell
-   LOG_LEVEL=DEBUG
+   export LOG_LEVEL=DEBUG
    ```
+
+4. use powertool
+
+    ```shell
+    export USE_POWERTOOL=true
+    ```
 
 ## Security
 
