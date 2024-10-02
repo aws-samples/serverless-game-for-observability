@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.31.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.38
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.35.2
+	github.com/aws/smithy-go/tracing/smithyoteltracing v1.0.0
 	go.opentelemetry.io/contrib/detectors/aws/lambda v0.55.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda v0.55.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig v0.55.0

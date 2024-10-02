@@ -10,6 +10,7 @@ import (
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/smithy-go/tracing/smithyoteltracing"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig"
 )
@@ -52,8 +53,10 @@ func main() {
 	}
 
 	h := handler{
-		delay:           delay,
-		sqsClient:       sqs.NewFromConfig(sdkConfig),
+		delay: delay,
+		sqsClient: sqs.NewFromConfig(sdkConfig, func(o *sqs.Options) {
+			o.TracerProvider = smithyoteltracing.Adapt(providers.tracerProvider)
+		}),
 		targetsPerBatch: int(targetsPerBatch),
 		queueURL:        delayedQueueURL,
 		traceProvider:   providers.tracerProvider,
