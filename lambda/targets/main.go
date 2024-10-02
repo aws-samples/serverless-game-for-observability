@@ -55,7 +55,9 @@ func main() {
 	h := handler{
 		delay: delay,
 		sqsClient: sqs.NewFromConfig(sdkConfig, func(o *sqs.Options) {
-			o.TracerProvider = smithyoteltracing.Adapt(providers.tracerProvider)
+			if enableXRaySDK := os.Getenv("ENABLE_XRAY_SDK"); enableXRaySDK == "true" {
+				o.TracerProvider = smithyoteltracing.Adapt(providers.tracerProvider)
+			}
 		}),
 		targetsPerBatch: int(targetsPerBatch),
 		queueURL:        delayedQueueURL,

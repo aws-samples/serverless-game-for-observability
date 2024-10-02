@@ -187,6 +187,7 @@ export class LambdaAPIs {
       memorySize: 1024,
       functionName: id + '_targets',
       environment: {
+        'ENABLE_XRAY': props.enableXray,
         'ENABLE_XRAY_SDK': props.enableXraySdk,
         'DELAYED_QUEUE_URL': props.targetQueue,
         'FIFO_QUEUE_URL': props.gameQueue,
@@ -198,10 +199,10 @@ export class LambdaAPIs {
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
       },
-      adotInstrumentation: {
+      adotInstrumentation: props.enableXray == Tracing.ACTIVE ? {
         layerVersion: AdotLayerVersion.fromGenericLayerVersion(AdotLambdaLayerGenericVersion.LATEST),
         execWrapper: AdotLambdaExecWrapper.REGULAR_HANDLER,
-      }
+      }: undefined,
     });
 
     // authorizer lambda function

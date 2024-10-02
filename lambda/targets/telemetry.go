@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"go.opentelemetry.io/contrib/detectors/aws/lambda"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -19,6 +21,11 @@ type telemetry struct {
 }
 
 func initSDK(ctx context.Context, res *resource.Resource) (*telemetry, error) {
+	sampler := sdktrace.NeverSample()
+	if strings.ToLower(os.Getenv("ENABLE_XRAY")) == "active" {
+		sampler = sdktrace.ParentBased(sdktrace.TraceIDRatioBased(.25))
+	}
+
 	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
 	if err != nil {
 		return nil, fmt.Errorf("unable to create OTLP HTTP exporter: %w", err)
@@ -26,7 +33,7 @@ func initSDK(ctx context.Context, res *resource.Resource) (*telemetry, error) {
 
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(.25))),
+		sdktrace.WithSampler(sampler),
 		sdktrace.WithBatcher(exporter),
 	)
 
