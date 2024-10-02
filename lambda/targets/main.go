@@ -10,11 +10,27 @@ import (
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig"
 )
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 func main() {
+	res, err := buildResource(context.Background(), "targets", "dev")
+	if err != nil {
+		logger.Error("unable to create telemetry resource", "error", err)
+		return
+	}
+
+	providers, err := initSDK(context.TODO(), res)
+	if err != nil {
+		logger.Error("unable to initialize OTel SDKs", "error", err)
+		return
+	}
+
+	defer providers.shutdown(context.TODO())
+
 	sdkConfig, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logger.Error("Unable to load default configuration", "error", err)
@@ -40,7 +56,10 @@ func main() {
 		sqsClient:       sqs.NewFromConfig(sdkConfig),
 		targetsPerBatch: int(targetsPerBatch),
 		queueURL:        delayedQueueURL,
+		traceProvider:   providers.tracerProvider,
 	}
 
-	runtime.Start(h.handleRequest)
+	runtime.Start(otellambda.InstrumentHandler(h.handleRequest,
+		xrayconfig.WithRecommendedOptions(providers.tracerProvider)...,
+	))
 }

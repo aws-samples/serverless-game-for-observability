@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
+import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion, IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { StepFunction } from './step-functions';
 import path = require('path');
@@ -197,6 +197,10 @@ export class LambdaAPIs {
         'USE_POWERTOOL': props.usePowertool,
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
+      },
+      adotInstrumentation: {
+        layerVersion: AdotLayerVersion.fromGenericLayerVersion(AdotLambdaLayerGenericVersion.LATEST),
+        execWrapper: AdotLambdaExecWrapper.REGULAR_HANDLER,
       }
     });
 
