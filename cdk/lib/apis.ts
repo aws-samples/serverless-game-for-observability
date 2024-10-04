@@ -265,13 +265,17 @@ export class LambdaAPIs {
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
         'STATE_MACHINE_ARN': props.stateMachineArn,
         'USE_POWERTOOL': props.usePowertool,
-        'OPENTELEMETRY_COLLECTOR_CONFIG_FILE': '/var/task/config.yaml',
-        'OTEL_PROPAGATORS': 'tracecontext,baggage,xray'
+        'EMIT_SHOOTING_METRIC': props.emitShootingMetric
       }
     });
     
-    logicFunction.addLayers(cdk.aws_lambda.LayerVersion.fromLayerVersionArn(scope, 'ADOTLayer', 'arn:aws:lambda:' + props.region + ':901920570463:layer:aws-otel-nodejs-amd64-ver-1-18-1:4'))
-    logicFunction.addEnvironment('AWS_LAMBDA_EXEC_WRAPPER', '/opt/otel-handler')
+    if(props.useAdotLayer == 'true'){
+      logicFunction.addLayers(cdk.aws_lambda.LayerVersion.fromLayerVersionArn(scope, 'ADOTLayer', `arn:aws:lambda:${props.region}:901920570463:layer:aws-otel-nodejs-amd64-ver-1-18-1:4`))
+      logicFunction.addEnvironment('AWS_LAMBDA_EXEC_WRAPPER', '/opt/otel-handler')
+      logicFunction.addEnvironment('OPENTELEMETRY_COLLECTOR_CONFIG_FILE', '/var/task/config.yaml')
+      logicFunction.addEnvironment('OTEL_PROPAGATORS', 'tracecontext,baggage,xray')
+    }
+    
 
     logicFunction.addEventSourceMapping('LogicFunctionEventSourceMapping', {
       eventSourceArn: props.gameQueueArn,

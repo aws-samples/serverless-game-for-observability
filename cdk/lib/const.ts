@@ -10,4 +10,6 @@ export class Constants {
     public static readonly templatePrefixName = process.env.TEMPLATE_PREFIX_NAME || "aws-serverless-game-demo01";
     public static readonly fifoQueueGroupId = process.env.FIFO_QUEUE_GROUP_ID || "group1";
     public static readonly usePowertool = process.env.USE_POWERTOOL || "false";
+    public static readonly useAdotLayer = process.env.USE_ADOT_LAYER || "false";
+    public static readonly emitShootingMetric = process.env.EMIT_SHOOTING_METRIC || "false";
 }

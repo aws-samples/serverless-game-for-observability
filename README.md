@@ -39,7 +39,13 @@ Variables:
     export USE_ADOT_LAYER=true
     ```
 
-6. 
+6. emit metrics from logic function
+
+    ``` shell
+    export EMIT_SHOOTING_METRIC=true
+    ```
+
+7. 
 
 ## Security
 

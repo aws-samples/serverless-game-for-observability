@@ -3,45 +3,51 @@ const AWSXRay = require("aws-xray-sdk");
 const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
+const emitShootingMetric = process.env.EMIT_SHOOTING_METRIC== "true" ? true : false
 
-// 1. Initiate OpenTelemetry Metrics exporter to send metrics to ADOT Collector
-const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
-const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
-const opentelemetry = require('@opentelemetry/api');
-const { Resource } = require('@opentelemetry/resources');
-const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
+function createCounter(){
+    const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
+    const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
+    const opentelemetry = require('@opentelemetry/api');
+    const { Resource } = require('@opentelemetry/resources');
+    const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
 
-// Set the OpenTelemetry diagnostic logger
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+    // Set the OpenTelemetry diagnostic logger
+    // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
-const metricExporter = new OTLPMetricExporter({});
+    const metricExporter = new OTLPMetricExporter({});
 
-// Initialize the AWS Distro for OpenTelemetry
-const meterProvider = new MeterProvider({
-    resource: new Resource({
-        'service.name': 'random-number-lambda',
-    }),
-    readers: [new PeriodicExportingMetricReader({
-        exporter: metricExporter,
-        exportIntervalMillis: 1000,
-      })]
-});
+    // Initialize the AWS Distro for OpenTelemetry
+    const meterProvider = new MeterProvider({
+        resource: new Resource({
+            'service.name': 'random-number-lambda',
+        }),
+        readers: [new PeriodicExportingMetricReader({
+            exporter: metricExporter,
+            exportIntervalMillis: 1000,
+        })]
+    });
 
-opentelemetry.metrics.setGlobalMeterProvider(meterProvider);
-const meter = meterProvider.getMeter('default')
+    opentelemetry.metrics.setGlobalMeterProvider(meterProvider);
+    const meter = meterProvider.getMeter('default')
 
-// Create an observable gauge to emit random numbers
-const randomNumberCounter = meter.createCounter('random_number', {
-    description: 'A counter for random numbers'
-});
+    // Create an counter to emit random numbers
+    return meter.createCounter('random_number', {
+        description: 'A counter for random numbers'
+    });
+}
+
+// Create an counter to emit random numbers
+const randomNumberCounter = emitShootingMetric ? createCounter() : null;
 
 
-function updateData(){
-
+function updateData(playerId){
+    if( ! emitShootingMetric ) {
+        return
+    }
     const randomNumber = Math.random() * 100;
-
     // Record the metric by adding the random number to the counter
-    randomNumberCounter.add(randomNumber, { attributeKey: 'attribute-value' });
+    randomNumberCounter.add(randomNumber, { player: playerId + "" });
     console.log(`should emitted random number: ${randomNumber}`);
 
 }
@@ -206,8 +212,10 @@ function handleNewTargets(body) {
 }
 
 function handleShoot(body) {
-    updateData();
     shootItem = body;
+    logDebug(shootItem);
+    updateData(shootItem.player);
+    
     async.waterfall(
         [
             function (callback) {
