@@ -3,9 +3,7 @@ import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion,
 import { Construct } from 'constructs';
 import { StepFunction } from './step-functions';
 import path = require('path');
-import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class LambdaAPIs {
 
@@ -88,6 +86,11 @@ export class LambdaAPIs {
     lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
       effect: cdk.aws_iam.Effect.ALLOW,
       actions: ['execute-api:ManageConnections'],
+      resources: ['*']
+    }));
+    lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
+      effect: cdk.aws_iam.Effect.ALLOW,
+      actions: ['aps:*'],
       resources: ['*']
     }));
 
@@ -243,6 +246,7 @@ export class LambdaAPIs {
       code: cdk.aws_lambda.Code.fromAsset(path.join(__dirname, '../../lambda/logic/code.zip')),
       handler: 'index.handler',
       role: role,
+      architecture: cdk.aws_lambda.Architecture.X86_64,
       tracing: props.enableXray,
       applicationLogLevelV2: props.logLevel,
       loggingFormat: cdk.aws_lambda.LoggingFormat.JSON,
@@ -260,9 +264,15 @@ export class LambdaAPIs {
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
         'STATE_MACHINE_ARN': props.stateMachineArn,
-        'USE_POWERTOOL': props.usePowertool
+        'USE_POWERTOOL': props.usePowertool,
+        'OPENTELEMETRY_COLLECTOR_CONFIG_FILE': '/var/task/config.yaml',
+        'OTEL_PROPAGATORS': 'tracecontext,baggage,xray'
       }
     });
+    
+    logicFunction.addLayers(cdk.aws_lambda.LayerVersion.fromLayerVersionArn(scope, 'ADOTLayer', 'arn:aws:lambda:' + props.region + ':901920570463:layer:aws-otel-nodejs-amd64-ver-1-18-1:4'))
+    logicFunction.addEnvironment('AWS_LAMBDA_EXEC_WRAPPER', '/opt/otel-handler')
+
     logicFunction.addEventSourceMapping('LogicFunctionEventSourceMapping', {
       eventSourceArn: props.gameQueueArn,
       enabled: true,

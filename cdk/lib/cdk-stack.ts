@@ -5,6 +5,7 @@ import { Queues } from './sqs';
 import { DynamoDB } from './dynamodb';
 import { Constants } from './const'; 
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
+import { OpenSourceObservability } from './oso';
 
 export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -33,6 +34,7 @@ export class CdkStack extends cdk.Stack {
       region: this.region
     });
     
+    const oso = new OpenSourceObservability(this,  Constants.templatePrefixName);
 
   }
 }

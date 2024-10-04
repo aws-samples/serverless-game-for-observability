@@ -13,7 +13,12 @@
         "@aws-sdk/client-sfn": "",
         "async": "",
         "aws-sdk": "2.1691.0",
-        "aws-xray-sdk": ""
+        "aws-xray-sdk": "",
+        "@opentelemetry/api": "",
+        "@opentelemetry/sdk-metrics": "",
+        "@opentelemetry/resources": "",
+        "@opentelemetry/exporter-metrics-otlp-http": ""
+        
     },
     "keywords": [],
     "author": "",

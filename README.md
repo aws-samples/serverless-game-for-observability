@@ -33,6 +33,14 @@ Variables:
     export USE_POWERTOOL=true
     ```
 
+5. use ADOT layer
+
+    ```shell
+    export USE_ADOT_LAYER=true
+    ```
+
+6. 
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.

@@ -4,13 +4,54 @@ const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
 
+// 1. Initiate OpenTelemetry Metrics exporter to send metrics to ADOT Collector
+const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
+const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
+const opentelemetry = require('@opentelemetry/api');
+const { Resource } = require('@opentelemetry/resources');
+const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
+
+// Set the OpenTelemetry diagnostic logger
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+
+const metricExporter = new OTLPMetricExporter({});
+
+// Initialize the AWS Distro for OpenTelemetry
+const meterProvider = new MeterProvider({
+    resource: new Resource({
+        'service.name': 'random-number-lambda',
+    }),
+    readers: [new PeriodicExportingMetricReader({
+        exporter: metricExporter,
+        exportIntervalMillis: 1000,
+      })]
+});
+
+opentelemetry.metrics.setGlobalMeterProvider(meterProvider);
+const meter = meterProvider.getMeter('default')
+
+// Create an observable gauge to emit random numbers
+const randomNumberCounter = meter.createCounter('random_number', {
+    description: 'A counter for random numbers'
+});
+
+
+function updateData(){
+
+    const randomNumber = Math.random() * 100;
+
+    // Record the metric by adding the random number to the counter
+    randomNumberCounter.add(randomNumber, { attributeKey: 'attribute-value' });
+    console.log(`should emitted random number: ${randomNumber}`);
+
+}
+
+
 // log section
 const { Logger } = require('@aws-lambda-powertools/logger');
-const { Tracer } = require('@aws-lambda-powertools/tracer');
 
 
 const logger = new Logger({ serviceName: 'serverless-game-logic' });
-const tracer = new Tracer();
 
 const usePowertool = process.env.USE_POWERTOOL == "true"? true : false;
 console.log("powertool enabled is ", usePowertool)
@@ -42,6 +83,8 @@ function logError(message){
     }
 }
 
+
+
 const laserWidth = process.env.LaserWidth || 0.6;
 const mosWidth = process.env.MosquetoWidth || 1.0;
 
@@ -63,6 +106,7 @@ exports.handler = function (event, context) {
         record = records[i];
         handleEvent(record);
     }
+
 
     const response = {
         statusCode: 200,
@@ -162,6 +206,7 @@ function handleNewTargets(body) {
 }
 
 function handleShoot(body) {
+    updateData();
     shootItem = body;
     async.waterfall(
         [

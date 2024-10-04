@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "localhost:4317"
+      http:
+        endpoint: "localhost:4318"
+
+exporters:
+  logging:
+    loglevel: debug
+  awsxray:
+    region: ap-southeast-1
+  prometheusremotewrite:
+    endpoint: "https://aps-workspaces.ap-southeast-1.amazonaws.com/workspaces/ws-21494a7b-7b1c-45a8-90c1-7e5d48005681/api/v1/remote_write"
+    auth:
+      authenticator: sigv4auth
+
+extensions:
+  sigv4auth:
+    region: ap-southeast-1
+    service: "aps"
+
+
+service:
+  extensions: [sigv4auth]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, prometheusremotewrite]
+    traces:
+      receivers: [otlp]
+      exporters: [awsxray]
