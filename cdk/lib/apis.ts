@@ -45,13 +45,15 @@ export class LambdaAPIs {
       },
       
     });
-
     // create stage for api gateway integration
-    new cdk.aws_apigatewayv2.WebSocketStage(scope, id + '_GameApi_Stage', {
+    const demoStage = new cdk.aws_apigatewayv2.WebSocketStage(scope, id + '_GameApi_Stage', {
       webSocketApi: api,
       stageName: 'demo',
       autoDeploy: true,
     });
+
+    // create an output for api gateway endpoint
+    new cdk.CfnOutput(scope, 'GameApiEndpoint', { value: demoStage.url + "?Auth=123" });
 
     const webSocketAuthorizer = new cdk.aws_apigatewayv2.WebSocketAuthorizer(scope, id + '_Authorizer', {
       identitySource: ['route.request.querystring.Auth'],

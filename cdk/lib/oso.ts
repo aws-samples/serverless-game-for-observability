@@ -25,9 +25,12 @@ export class OpenSourceObservability {
             authenticationProviders: ['AWS_SSO'],
             permissionType: 'SERVICE_MANAGED',
             dataSources: ['PROMETHEUS'],
-            roleArn: role.roleArn
+            roleArn: role.roleArn,
+            
         });
-        
+
+        // add output for amp remote write endpoint
+        new cdk.CfnOutput(scope, 'AmpRemoteWriteEndpoint', { value: amp.attrPrometheusEndpoint });
         
     }
 }

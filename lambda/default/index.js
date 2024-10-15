@@ -19,6 +19,7 @@ exports.handler = function (event, context, callback) {
   } else if (event['Records']) {
     handleMessages(event)
   }
+
   const response = {
     statusCode: 200,
     body: JSON.stringify({ message: 'hello' })
@@ -153,6 +154,12 @@ function proceedShooting (request, connectionId, domain, stage) {
   shootInfo.connectionId = connectionId
   shootInfo.domain = domain
   shootInfo.stage = stage
+  // random error
+  // const randomNumber = Math.random();
+  // if (randomNumber > 0.5) {
+  //   console.error("error here!")
+  //   shootInfo["miss"] = "true"
+  // }
   async.waterfall(
     [
       function (callback) {

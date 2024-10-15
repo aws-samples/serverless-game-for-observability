@@ -6,7 +6,11 @@ echo "Script directory path: $script_dir"
 cd "$script_dir/lambda"
 
 cd logic
-npm install
+# npm install
+zip -r code.zip .
+
+cd ../default
+# npm install
 zip -r code.zip .
 
 cd ../../cdk

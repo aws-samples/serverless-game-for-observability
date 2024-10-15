@@ -4,6 +4,7 @@ const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
 const emitShootingMetric = process.env.EMIT_SHOOTING_METRIC== "true" ? true : false
+var returnError = false;
 
 function createCounter(){
     const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
@@ -49,7 +50,6 @@ function updateData(playerId){
     // Record the metric by adding the random number to the counter
     randomNumberCounter.add(randomNumber, { player: playerId + "" });
     console.log(`should emitted random number: ${randomNumber}`);
-
 }
 
 
@@ -112,7 +112,10 @@ exports.handler = function (event, context) {
         record = records[i];
         handleEvent(record);
     }
-
+    if(returnError){
+        logError("something wrong!");
+        return;
+    }
 
     const response = {
         statusCode: 200,
@@ -313,6 +316,12 @@ function filterHit(targets, shootInfo) {
         targets: targets,
         hit: [],
     };
+    if (shootInfo["miss"] === "true") {
+        returnError = true
+        logError("Error! I will miss the hit");
+        ret.targets = newTargets;
+        return ret;
+    }
     for (let i = 0; i < targets.length; i++) {
         if (canHitTarget(shootInfo.origin.x, shootInfo.origin.y, shootInfo.angle, targets[i].x, targets[i].y)) {
             ret.hit.push(targets[i].id);
