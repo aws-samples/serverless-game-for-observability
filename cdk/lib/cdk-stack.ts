@@ -17,6 +17,8 @@ export class CdkStack extends cdk.Stack {
       enableXray: Constants.enableXray
     })
 
+    const oso = new OpenSourceObservability(this,  Constants.templatePrefixName);
+
     const lambdaApi = new LambdaAPIs(this, Constants.templatePrefixName, {
       enableXray: Constants.enableXray,
       enableXraySdk: Constants.enableXraySdk,
@@ -34,10 +36,9 @@ export class CdkStack extends cdk.Stack {
       playerTable: dynamodb.playerTableName,
       sessionTable: dynamodb.sessionTableName,
       logLevel: Constants.logLevel,
-      region: this.region
+      region: this.region,
+      apsEndpoint: oso.workspace.attrPrometheusEndpoint
     });
     
-    const oso = new OpenSourceObservability(this,  Constants.templatePrefixName);
-
   }
 }

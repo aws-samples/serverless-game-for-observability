@@ -276,6 +276,7 @@ export class LambdaAPIs {
       logicFunction.addEnvironment('AWS_LAMBDA_EXEC_WRAPPER', '/opt/otel-handler')
       logicFunction.addEnvironment('OPENTELEMETRY_COLLECTOR_CONFIG_FILE', '/var/task/config.yaml')
       logicFunction.addEnvironment('OTEL_PROPAGATORS', 'tracecontext,baggage,xray')
+      logicFunction.addEnvironment('APS_ENDPOINT', props.apsEndpoint)
     }
     
 

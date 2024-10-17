@@ -10,15 +10,15 @@ exporters:
   logging:
     loglevel: debug
   awsxray:
-    region: ap-southeast-1
+    region: ${env:AWS_REGION}
   prometheusremotewrite:
-    endpoint: "https://aps-workspaces.ap-southeast-1.amazonaws.com/workspaces/ws-9fd99638-5830-4b45-a242-f05c455200c2/api/v1/remote_write"
+    endpoint: ${env:APS_ENDPOINT}
     auth:
       authenticator: sigv4auth
 
 extensions:
   sigv4auth:
-    region: ap-southeast-1
+    region: ${env:AWS_REGION}
     service: "aps"
 
 

@@ -4,9 +4,10 @@ import * as aps from 'aws-cdk-lib/aws-aps';
 
 
 export class OpenSourceObservability {
+    public workspace: aps.CfnWorkspace
     constructor(scope: Construct, id: string, props?: any) {
         // create a amazon managed prometheus workspace
-        const amp = new aps.CfnWorkspace(scope, 'MyCfnWorkspace', {
+        this.workspace = new aps.CfnWorkspace(scope, 'MyCfnWorkspace', {
             alias: 'serverless-observability-workspace'
         });
 
@@ -30,7 +31,7 @@ export class OpenSourceObservability {
         });
 
         // add output for amp remote write endpoint
-        new cdk.CfnOutput(scope, 'AmpRemoteWriteEndpoint', { value: amp.attrPrometheusEndpoint });
+        new cdk.CfnOutput(scope, 'AmpRemoteWriteEndpoint', { value: this.workspace.attrPrometheusEndpoint });
         
     }
 }
