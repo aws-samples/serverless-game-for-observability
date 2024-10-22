@@ -11,6 +11,7 @@ const defaultRegion = process.env.DEFAULT_REGION
 const sqs = initSqs()
 const ddb = initDynamoDB()
 const enableLog = process.env['LOG_ENABLED'] || false
+const injectShootingError = process.env['INJECT_SHOOTING_ERROR'] == 'true' ? true : false;
 
 exports.handler = function (event, context, callback) {
   console.log(event)
@@ -155,11 +156,11 @@ function proceedShooting (request, connectionId, domain, stage) {
   shootInfo.domain = domain
   shootInfo.stage = stage
   // random error
-  // const randomNumber = Math.random();
-  // if (randomNumber > 0.5) {
-  //   console.error("error here!")
-  //   shootInfo["miss"] = "true"
-  // }
+  const randomNumber = Math.random();
+  if (injectShootingError && randomNumber > 0.5) {
+    console.error("error here!")
+    shootInfo["miss"] = "true"
+  }
   async.waterfall(
     [
       function (callback) {

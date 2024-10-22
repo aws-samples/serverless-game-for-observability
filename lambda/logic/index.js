@@ -100,6 +100,7 @@ const playerTableName = process.env.PLAYER_TABLE_NAME;
 const gameSessionTableName = process.env.GAME_SESSION_TABLE_NAME;
 const defaultRegion = process.env.DEFAULT_REGION;
 const stateMachineArn = process.env.STATE_MACHINE_ARN;
+const throwError = process.env.THROW_LOGIC_ERROR == 'true'? true : false;
 const sqs = initSqs();
 const ddb = initDynamoDB();
 const sfn = initSFN();
@@ -113,6 +114,9 @@ exports.handler = function (event, context) {
         handleEvent(record);
     }
     if(returnError){
+        if (throwError) {
+            throw new Error("something went wrong!");
+        }
         logError("something wrong!");
         return;
     }

@@ -121,7 +121,8 @@ export class LambdaAPIs {
         'PLAYER_TABLE_NAME': props.playerTable,
         'GAME_SESSION_TABLE_NAME': props.sessionTable,
         'DEFAULT_REGION': props.region,
-        'USE_POWERTOOL': props.usePowertool
+        'USE_POWERTOOL': props.usePowertool,
+        'INJECT_SHOOTING_ERROR': props.injectShootingError
       }
     });
 
@@ -267,7 +268,8 @@ export class LambdaAPIs {
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
         'STATE_MACHINE_ARN': props.stateMachineArn,
         'USE_POWERTOOL': props.usePowertool,
-        'EMIT_SHOOTING_METRIC': props.emitShootingMetric
+        'EMIT_SHOOTING_METRIC': props.emitShootingMetric,
+        'THROW_LOGIC_ERROR': props.throwLogicError
       }
     });
     

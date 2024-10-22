@@ -37,7 +37,9 @@ export class CdkStack extends cdk.Stack {
       sessionTable: dynamodb.sessionTableName,
       logLevel: Constants.logLevel,
       region: this.region,
-      apsEndpoint: oso.workspace.attrPrometheusEndpoint
+      apsEndpoint: oso.workspace.attrPrometheusEndpoint,
+      throwLogicError: Constants.throwLogicError,
+      injectShootingError: Constants.injectShootingError
     });
     
   }

@@ -12,4 +12,8 @@ export class Constants {
     public static readonly usePowertool = process.env.USE_POWERTOOL || "false";
     public static readonly useAdotLayer = process.env.USE_ADOT_LAYER || "false";
     public static readonly emitShootingMetric = process.env.EMIT_SHOOTING_METRIC || "false";
+    public static readonly throwLogicError = process.env.THROW_LOGIC_ERROR || "false";
+    public static readonly injectShootingError = process.env.INJECT_SHOOTING_ERROR || "false";
+
+    
 }
