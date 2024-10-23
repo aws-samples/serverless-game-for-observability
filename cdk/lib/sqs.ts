@@ -46,7 +46,10 @@ export class Queues {
             deadLetterQueue: targetDLQ,
             deliveryDelay: cdk.Duration.seconds(5)
         })
-
+        
+        new cdk.CfnOutput(scope, 'fifoUrl', { value: game_queue.queueUrl});
+        new cdk.CfnOutput(scope, 'fifoUrlDlq', { value: game_queue_dl.queueUrl});
+        
         this.queueUrls.set("game_queue", game_queue.queueUrl)
         this.queueUrls.set("target_queue", target_queue.queueUrl)
         this.queueArns.set("game_queue", game_queue.queueArn)
