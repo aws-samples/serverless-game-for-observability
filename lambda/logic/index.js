@@ -21,7 +21,7 @@ function createCounter(){
     // Initialize the AWS Distro for OpenTelemetry
     const meterProvider = new MeterProvider({
         resource: new Resource({
-            'service.name': 'random-number-lambda',
+            'service.name': 'game-logic',
         }),
         readers: [new PeriodicExportingMetricReader({
             exporter: metricExporter,
@@ -33,23 +33,36 @@ function createCounter(){
     const meter = meterProvider.getMeter('default')
 
     // Create an counter to emit random numbers
-    return meter.createCounter('random_number', {
-        description: 'A counter for random numbers'
-    });
+    return [
+        meter.createCounter('shoots', {
+            description: 'A counter for shooting numbers'
+        }), meter.createCounter('hits', {
+            description: 'A counter for this numbers'
+        })
+    ];
 }
 
 // Create an counter to emit random numbers
-const randomNumberCounter = emitShootingMetric ? createCounter() : null;
+const counters = emitShootingMetric ? createCounter() : null;
+const shootsCounter = counters[0];
+const hitsCounter = counters[1];
 
-
-function updateData(playerId){
+function updateShootingData(playerId){
     if( ! emitShootingMetric ) {
         return
     }
-    const randomNumber = Math.random() * 100;
     // Record the metric by adding the random number to the counter
-    randomNumberCounter.add(randomNumber, { player: playerId + "" });
-    console.log(`should emitted random number: ${randomNumber}`);
+    shootsCounter.add(1, { player: playerId + "" });
+    console.log('should emitted 1 more shoot');
+}
+
+function updateHittingData(hits, playerId) {
+    if( ! emitShootingMetric ) {
+        return
+    }
+    // Record the metric by adding the random number to the counter
+    hitsCounter.add(hits, { player: playerId + "" });
+    console.log(`should emitted ${hits} more shoot`);
 }
 
 
@@ -221,8 +234,8 @@ function handleNewTargets(body) {
 function handleShoot(body) {
     shootItem = body;
     logDebug(shootItem);
-    updateData(shootItem.player);
-    
+    updateShootingData(shootItem.connectionId);
+
     async.waterfall(
         [
             function (callback) {
@@ -269,6 +282,7 @@ function handleShoot(body) {
                 existingTargets = result.targets;
                 shootItem.hit = result.hit;
                 if (result.hit.length > 0) {
+                    updateHittingData(result.hit.length, shootItem.connectionId);
                     playerStatus = JSON.parse(data.status.S);
                     playerStatus[shootItem.player] += result.hit.length;
                     data.status.S = JSON.stringify(playerStatus);
@@ -322,7 +336,7 @@ function filterHit(targets, shootInfo) {
     };
     if (shootInfo["miss"] === "true") {
         returnError = true
-        logError("Error! I will miss the hit");
+        logError("Error! I will miss the hit " + shootInfo["miss"]);
         ret.targets = newTargets;
         return ret;
     }

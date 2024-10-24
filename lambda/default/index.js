@@ -157,8 +157,8 @@ function proceedShooting (request, connectionId, domain, stage) {
   shootInfo.stage = stage
   // random error
   const randomNumber = Math.random();
-  if (injectShootingError && randomNumber > 0.5) {
-    console.error("error here!")
+  if (injectShootingError && randomNumber > 0.7) {
+    console.error(randomNumber, " error here!")
     shootInfo["miss"] = "true"
   }
   async.waterfall(
