@@ -10,6 +10,7 @@ import (
 	runtime "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/smithy-go/metrics/smithyotelmetrics"
 	"github.com/aws/smithy-go/tracing/smithyoteltracing"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig"
@@ -57,6 +58,7 @@ func main() {
 		sqsClient: sqs.NewFromConfig(sdkConfig, func(o *sqs.Options) {
 			if enableXRaySDK := os.Getenv("ENABLE_XRAY_SDK"); enableXRaySDK == "true" {
 				o.TracerProvider = smithyoteltracing.Adapt(providers.tracerProvider)
+				o.MeterProvider = smithyotelmetrics.Adapt(providers.meterProvider)
 			}
 		}),
 		targetsPerBatch: int(targetsPerBatch),

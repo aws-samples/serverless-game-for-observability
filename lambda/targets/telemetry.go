@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/contrib/detectors/aws/lambda"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -26,21 +27,30 @@ func initSDK(ctx context.Context, res *resource.Resource) (*telemetry, error) {
 		sampler = sdktrace.ParentBased(sdktrace.TraceIDRatioBased(.25))
 	}
 
-	exporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
+	traceExporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint("localhost:4318"), otlptracehttp.WithInsecure())
 	if err != nil {
-		return nil, fmt.Errorf("unable to create OTLP HTTP exporter: %w", err)
+		return nil, fmt.Errorf("unable to create OTLP HTTP trace exporter: %w", err)
 	}
 
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
 		sdktrace.WithSampler(sampler),
-		sdktrace.WithBatcher(exporter),
+		sdktrace.WithBatcher(traceExporter),
 	)
+
+	metricExporter, err := otlpmetrichttp.New(ctx, otlpmetrichttp.WithEndpoint("localhost:4318"), otlpmetrichttp.WithInsecure())
+	if err != nil {
+		return nil, fmt.Errorf("unable to create OTLP HTTP metric exporter: %w", err)
+	}
+
+	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExporter)), sdkmetric.WithResource(res))
 
 	return &telemetry{
 		tracerProvider: tp,
+		meterProvider:  mp,
 		shutdown: func(ctx context.Context) {
 			tp.Shutdown(ctx)
+			mp.Shutdown(ctx)
 		},
 	}, nil
 }

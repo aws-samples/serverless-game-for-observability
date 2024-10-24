@@ -1,3 +1,3 @@
-build: main.go go.mod go.sum
+build: main.go go.mod go.sum config.yaml
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap ./...
-	zip -r code.zip bootstrap
+	zip -r code.zip bootstrap config.yaml

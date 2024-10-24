@@ -4,12 +4,14 @@ import * as aps from 'aws-cdk-lib/aws-aps';
 
 
 export class OpenSourceObservability {
-    public workspace: aps.CfnWorkspace
+    public remoteWriteUrl: string;
     constructor(scope: Construct, id: string, props?: any) {
         // create a amazon managed prometheus workspace
-        this.workspace = new aps.CfnWorkspace(scope, 'MyCfnWorkspace', {
+        const workspace = new aps.CfnWorkspace(scope, 'MyCfnWorkspace', {
             alias: 'serverless-observability-workspace'
         });
+
+        this.remoteWriteUrl = `${workspace.attrPrometheusEndpoint}api/v1/remote_write`;
 
         // create role for grafana to access prometheus workspace
         const role = new cdk.aws_iam.Role(scope, 'grafana-role', {
@@ -31,7 +33,7 @@ export class OpenSourceObservability {
         });
 
         // add output for amp remote write endpoint
-        new cdk.CfnOutput(scope, 'AmpRemoteWriteEndpoint', { value: this.workspace.attrPrometheusEndpoint });
+        new cdk.CfnOutput(scope, 'AmpRemoteWriteEndpoint', { value: this.remoteWriteUrl });
         
     }
 }

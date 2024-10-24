@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "localhost:4317"
+      http:
+        endpoint: "localhost:4318"
+
+exporters:
+  logging:
+    loglevel: debug
+  awsxray:
+    region: ${env:AWS_REGION}
+  prometheusremotewrite:
+    endpoint: ${env:APS_ENDPOINT}
+    auth:
+      authenticator: sigv4auth
+
+extensions:
+  sigv4auth:
+    region: ${env:AWS_REGION}
+    service: "aps"
+
+
+service:
+  extensions: [sigv4auth]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, prometheusremotewrite]
+    traces:
+      receivers: [otlp]
+      exporters: [awsxray]

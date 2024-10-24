@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion, IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
+import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion, FunctionProps, IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { StepFunction } from './step-functions';
 import path = require('path');
@@ -180,8 +180,7 @@ export class LambdaAPIs {
       }
     });
 
-    // create targets generation function
-    const targetsFunction = new cdk.aws_lambda.Function(scope, id + '_targets', {
+    let targetsProps: Record<string, any> = {
       runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2023,
       code: cdk.aws_lambda.Code.fromAsset(path.join(__dirname, '../../lambda/targets/code.zip')),
       handler: 'bootstrap',
@@ -205,11 +204,19 @@ export class LambdaAPIs {
         'TARGET_DELAYED_SECONDS': props.targetsFrequency.toString(),
         'TARGET_PER_BATCH': props.targetsPerBatch.toString(),
       },
-      adotInstrumentation: props.enableXray == Tracing.ACTIVE ? {
+    };
+
+    if (props.enableXray == Tracing.ACTIVE) {
+      targetsProps.adotInstrumentation = {
         layerVersion: AdotLayerVersion.fromGenericLayerVersion(AdotLambdaLayerGenericVersion.LATEST),
         execWrapper: AdotLambdaExecWrapper.REGULAR_HANDLER,
-      }: undefined,
-    });
+      };
+      targetsProps.environment['OPENTELEMETRY_COLLECTOR_CONFIG_FILE'] = '/var/task/config.yaml';
+      targetsProps.environment['APS_ENDPOINT'] = props.apsEndpoint;
+    }
+
+    // create targets generation function
+    const targetsFunction = new cdk.aws_lambda.Function(scope, id + '_targets', targetsProps as FunctionProps);
 
     // authorizer lambda function
     const authorizerFunction = new cdk.aws_lambda.Function(scope, id + '_authorizer', {
