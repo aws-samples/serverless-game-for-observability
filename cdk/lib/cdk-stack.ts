@@ -3,8 +3,7 @@ import { Construct } from 'constructs';
 import { LambdaAPIs } from './apis';
 import { Queues } from './sqs';
 import { DynamoDB } from './dynamodb';
-import { Constants } from './const'; 
-import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
+import { Constants } from './const';
 import { OpenSourceObservability } from './oso';
 
 export class CdkStack extends cdk.Stack {

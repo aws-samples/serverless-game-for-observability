@@ -18,7 +18,31 @@ More information can be found on the architecture below and code in the reposito
 
 Deployment options are documented in this section.
 
-Environment Variables:
+Environment Variables for Cloudformation:
+
+1. change region (default using aws cli configured region)
+
+    ``` shell
+    # if you would like to set deploy region to Oregon
+    export AWS_DEFAULT_REGION=us-west-2
+    ```
+
+2. change deploy account (default using aws cli configured account)
+
+    ``` shell
+    # if you would like to set deploy region to Oregon
+    export CDK_DEFAULT_ACCOUNT=12345
+    ```
+
+3. change stack name (default is "ServerlessGameDemoStack")
+
+    ``` shell
+    export STACK_NAME=serverless-observability-demo
+    ```
+
+    all resource names will start with `STACK_NAME` value by default. You can change it using `TEMPLATE_PREFIX_NAME` environment variable.
+
+Environment Variables for Games:
 
 1. enable active tracing for Lambda, StepFucntion
 

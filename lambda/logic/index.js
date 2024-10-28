@@ -44,8 +44,8 @@ function createCounter(){
 
 // Create an counter to emit random numbers
 const counters = emitShootingMetric ? createCounter() : null;
-const shootsCounter = counters[0];
-const hitsCounter = counters[1];
+const shootsCounter = emitShootingMetric ? counters[0] : null;
+const hitsCounter = emitShootingMetric ? counters[1] : null;
 
 function updateShootingData(playerId){
     if( ! emitShootingMetric ) {
