@@ -11,7 +11,7 @@ import (
 
 var _ slog.Handler = &traceAwareLogHandler{}
 
-var logger = slog.New(&traceAwareLogHandler{next: slog.NewJSONHandler(os.Stdout, nil)})
+var logger = slog.New(&traceAwareLogHandler{next: slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true})})
 
 type traceAwareLogHandler struct {
 	next slog.Handler
