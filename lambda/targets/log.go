@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -24,8 +25,7 @@ func (h *traceAwareLogHandler) Handle(ctx context.Context, rec slog.Record) erro
 	if spanctx := trace.SpanContextFromContext(ctx); spanctx.IsValid() {
 		rec = rec.Clone()
 		rec.AddAttrs(
-			slog.String("traceID", spanctx.TraceID().String()),
-			slog.String("spanID", spanctx.SpanID().String()),
+			slog.String("traceID", fmt.Sprintf("1-%s-%s", spanctx.TraceID().String(), spanctx.SpanID().String())),
 		)
 	}
 
