@@ -22,18 +22,18 @@ type handler struct {
 }
 
 func (h *handler) handleRequest(ctx context.Context, event *inputEvent) (*response, error) {
-	logger.Info("received event", "event", event)
+	logger.InfoContext(ctx, "received event", "event", event)
 
 	_, span := h.traceProvider.Tracer("github.com/aws-samples/serverless-game-for-observability/lambda/targets").Start(ctx,
 		"Random Targets",
 		trace.WithAttributes(attribute.Int("target.count", h.targetsPerBatch)),
 	)
 
-	logger.Info("span details", "traceId", span.SpanContext().TraceID(), "sampled", span.SpanContext().IsSampled(), "spanId", span.SpanContext().SpanID())
+	logger.InfoContext(ctx, "span details", "sampled", span.SpanContext().IsSampled())
 
 	newTargets, err := json.Marshal(h.randomTargets())
 	if err != nil {
-		logger.Info("unable to marshal new targets", "error", err)
+		logger.InfoContext(ctx, "unable to marshal new targets", "error", err)
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (h *handler) sendMessage(ctx context.Context, data *inputEvent) error {
 	)
 	defer span.End()
 
-	logger.Info("span details", "traceId", span.SpanContext().TraceID(), "sampled", span.SpanContext().IsSampled(), "spanId", span.SpanContext().SpanID())
+	logger.InfoContext(ctx, "span details", "sampled", span.SpanContext().IsSampled())
 
 	body, err := json.Marshal(sqsMessage{
 		Action: "newtargets",
@@ -76,11 +76,11 @@ func (h *handler) sendMessage(ctx context.Context, data *inputEvent) error {
 	})
 
 	if err != nil {
-		logger.Error("unable to marshal SQS message", "error", err)
+		logger.ErrorContext(ctx, "unable to marshal SQS message", "error", err)
 		return err
 	}
 
-	logger.Info("sending delayed newtargets message", "message", string(body))
+	logger.InfoContext(ctx, "sending delayed newtargets message", "message", string(body))
 
 	_, err = h.sqsClient.SendMessage(ctx, &sqs.SendMessageInput{
 		MessageBody:  aws.String(string(body)),

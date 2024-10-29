@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -16,32 +15,32 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig"
 )
 
-var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
 func main() {
-	res, err := buildResource(context.Background(), "targets", "dev")
+	ctx := context.Background()
+
+	res, err := buildResource(ctx, "targets", "dev")
 	if err != nil {
-		logger.Error("unable to create telemetry resource", "error", err)
+		logger.ErrorContext(ctx, "unable to create telemetry resource", "error", err)
 		return
 	}
 
-	providers, err := initSDK(context.TODO(), res)
+	providers, err := initSDK(ctx, res)
 	if err != nil {
-		logger.Error("unable to initialize OTel SDKs", "error", err)
+		logger.ErrorContext(ctx, "unable to initialize OTel SDKs", "error", err)
 		return
 	}
 
-	defer providers.shutdown(context.TODO())
+	defer providers.shutdown(ctx)
 
-	sdkConfig, err := config.LoadDefaultConfig(context.TODO())
+	sdkConfig, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Error("Unable to load default configuration", "error", err)
+		logger.ErrorContext(ctx, "Unable to load default configuration", "error", err)
 		return
 	}
 
 	targetsPerBatch, err := strconv.ParseInt(os.Getenv("TARGET_PER_BATCH"), 10, 0)
 	if err != nil {
-		logger.Error("unable to determine number of targets per batch", "error", err)
+		logger.ErrorContext(ctx, "unable to determine number of targets per batch", "error", err)
 		targetsPerBatch = 10
 	}
 
@@ -49,7 +48,7 @@ func main() {
 
 	delay, err := time.ParseDuration(os.Getenv("TARGET_DELAYED_SECONDS") + "s")
 	if err != nil {
-		logger.Error("unable to determine delay duration", "error", err)
+		logger.ErrorContext(ctx, "unable to determine delay duration", "error", err)
 		delay = 10 * time.Second
 	}
 
