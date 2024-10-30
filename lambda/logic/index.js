@@ -3,7 +3,8 @@ const AWSXRay = require("aws-xray-sdk");
 const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
-const emitShootingMetric = process.env.EMIT_SHOOTING_METRIC== "true" ? true : false
+const emitShootingMetric = process.env.EMIT_SHOOTING_METRIC == "true" ? true : false
+const useCustomDomain = process.env.USE_CUSTOM_DOMAIN == "true" ? true : false
 var returnError = false;
 
 function createCounter(){
@@ -75,12 +76,12 @@ const logger = new Logger({ serviceName: 'serverless-game-logic' });
 const usePowertool = process.env.USE_POWERTOOL == "true"? true : false;
 console.log("powertool enabled is ", usePowertool)
 
-function logDebug(message){
+function logDebug(...messages){
     if(usePowertool){
-        logger.debug(message);
+        logger.debug(...messages);
     }
     else {
-        console.debug(message);
+        console.debug(...messages);
     }
 }
 
@@ -336,7 +337,7 @@ function filterHit(targets, shootInfo) {
     };
     if (shootInfo["miss"] === "true") {
         returnError = true
-        logError("Error! I will miss the hit " + shootInfo["miss"]);
+        logError("hit " + shootInfo["miss"]);
         ret.targets = newTargets;
         return ret;
     }
@@ -531,7 +532,7 @@ function sendStart(body, callback) {
     const stage = body.stage;
     logDebug(domain, stage, body);
 
-    const callbackUrl = `https://${domain}/${stage}`;
+    const callbackUrl = useCustomDomain ? `https://${domain}` : `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(body.data.connectionIds.S);
     logDebug(ids);
@@ -552,7 +553,7 @@ function sendTargetUpdate(request, callback) {
     const stage = request.stage;
     logDebug(domain, stage, request);
 
-    const callbackUrl = `https://${domain}/${stage}`;
+    const callbackUrl = useCustomDomain ? `https://${domain}` : `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(request.ids);
     logDebug(ids);
@@ -586,7 +587,7 @@ function sendStop(body, callback) {
     const stage = data.stage;
     logDebug(domain, stage, data);
 
-    const callbackUrl = `https://${domain}/${stage}`;
+    const callbackUrl = useCustomDomain ? `https://${domain}` : `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = JSON.parse(data.ids);
     logDebug(ids);
@@ -615,12 +616,12 @@ function enhanceStop(ids, data, client) {
 }
 
 function updateShoot(data, callback) {
-    logDebug("updateShoot data", data);
+    logDebug("updateShoot data" + data);
     const domain = data.domain;
     const stage = data.stage;
-    logDebug(domain, stage, data);
+    logDebug(domain + stage, data);
 
-    const callbackUrl = `https://${domain}/${stage}`;
+    const callbackUrl = useCustomDomain ? `https://${domain}` : `https://${domain}/${stage}`;
     const client = new ApiGatewayManagementApiClient({ endpoint: callbackUrl });
     ids = data.connectionIds;
     logDebug(ids);

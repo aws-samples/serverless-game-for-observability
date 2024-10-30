@@ -52,6 +52,33 @@ export class LambdaAPIs {
       autoDeploy: true,
     });
 
+    //  create custom domain
+    if(props.customDomain != "") {
+      const subDomain:string = props.customDomain;
+      // create hosted zone from existing domain in route53
+      const hostedZone = cdk.aws_route53.HostedZone.fromLookup(scope, id + '_GameApi_HostedZone', { domainName: subDomain.slice(subDomain.indexOf(".") + 1) });
+      // create CName record from hosted zone
+      
+      // create certificate for custom domain
+      const certificate = new cdk.aws_certificatemanager.Certificate(scope, id + '_GameApi_Certificate', {
+        domainName: subDomain,
+        validation: cdk.aws_certificatemanager.CertificateValidation.fromDns(hostedZone),
+      });
+      const apiCustomDomain = new cdk.aws_apigatewayv2.DomainName(scope, id + '_GameApi_Domain', {
+        domainName: subDomain,
+        certificate: certificate,
+      });
+      //create API mapping
+      const apiMapping = new cdk.aws_apigatewayv2.ApiMapping(scope, id + '_GameApi_Mapping', {
+        api: api,
+        domainName: apiCustomDomain,
+        stage: demoStage,
+      });
+
+      new cdk.aws_route53.CnameRecord(scope, id + '_GameApi_CnameRecord', { domainName: apiCustomDomain.regionalDomainName, recordName: props.customDomain + ".", zone: hostedZone });
+      new cdk.CfnOutput(scope, 'GameApiEndpointAlias', { value: "wss://" + props.customDomain + "?Auth=123" });
+    }
+    
     // create an output for api gateway endpoint
     new cdk.CfnOutput(scope, 'GameApiEndpoint', { value: demoStage.url + "?Auth=123" });
 
@@ -88,6 +115,11 @@ export class LambdaAPIs {
     lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
       effect: cdk.aws_iam.Effect.ALLOW,
       actions: ['execute-api:ManageConnections'],
+      resources: ['*']
+    }));
+    lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
+      effect: cdk.aws_iam.Effect.ALLOW,
+      actions: ['execute-api:Invoke'],
       resources: ['*']
     }));
     lambdaRole.addToPolicy(new cdk.aws_iam.PolicyStatement({
@@ -276,7 +308,8 @@ export class LambdaAPIs {
         'STATE_MACHINE_ARN': props.stateMachineArn,
         'USE_POWERTOOL': props.usePowertool,
         'EMIT_SHOOTING_METRIC': props.emitShootingMetric,
-        'THROW_LOGIC_ERROR': props.throwLogicError
+        'THROW_LOGIC_ERROR': props.throwLogicError,
+        'USE_CUSTOM_DOMAIN': props.useCustomDomain
       }
     });
     

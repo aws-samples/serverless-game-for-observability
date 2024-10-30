@@ -38,7 +38,9 @@ export class CdkStack extends cdk.Stack {
       region: this.region,
       apsEndpoint: oso.remoteWriteUrl,
       throwLogicError: Constants.throwLogicError,
-      injectShootingError: Constants.injectShootingError
+      injectShootingError: Constants.injectShootingError,
+      customDomain: Constants.customDomain,
+      useCustomDomain: Constants.useCustomDomain,
     });
     
   }

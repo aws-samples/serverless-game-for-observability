@@ -30,7 +30,7 @@ Environment Variables for Cloudformation:
 2. change deploy account (default using aws cli configured account)
 
     ``` shell
-    # if you would like to set deploy region to Oregon
+    # if you would like to set deploy accounnt other than the aws cli default configured one
     export CDK_DEFAULT_ACCOUNT=12345
     ```
 
@@ -41,6 +41,15 @@ Environment Variables for Cloudformation:
     ```
 
     all resource names will start with `STACK_NAME` value by default. You can change it using `TEMPLATE_PREFIX_NAME` environment variable.
+
+4. If you have maintained a hosted zone and would like to use your own DNS for backend server.
+
+    ```shell
+    # replace `play.awsdemo.fun` with your own sub domain.
+    # The CDK stack will create a subdomain in Route53.
+    # and add a certificate with DNS verification record.
+    export CUSTOM_DOMAIN=play.awsdemo.fun
+    ```
 
 Environment Variables for Games:
 

@@ -15,5 +15,8 @@ export class Constants {
     public static readonly emitShootingMetric = process.env.EMIT_SHOOTING_METRIC || "false";
     public static readonly throwLogicError = process.env.THROW_LOGIC_ERROR || "false";
     public static readonly injectShootingError = process.env.INJECT_SHOOTING_ERROR || "false";
+    public static readonly customDomain = process.env.CUSTOM_DOMAIN || "";
+    public static readonly useCustomDomain = Constants.customDomain == "" ? "false" : "true";
+
 
 }
