@@ -10,11 +10,48 @@ const gameSessionTableName = process.env.GAME_SESSION_TABLE_NAME
 const defaultRegion = process.env.DEFAULT_REGION
 const sqs = initSqs()
 const ddb = initDynamoDB()
-const enableLog = process.env['LOG_ENABLED'] || false
+
 const injectShootingError = process.env['INJECT_SHOOTING_ERROR'] == 'true' ? true : false;
 
+
+// log section
+const { Logger } = require('@aws-lambda-powertools/logger');
+
+const logger = new Logger({ serviceName: 'serverless-game-default' });
+
+const usePowertool = process.env.USE_POWERTOOL == "true" ? true : false;
+console.log("powertool enabled is ", usePowertool)
+
+function logDebug(...messages){
+    if(usePowertool){
+        logger.debug(...messages);
+    }
+    else {
+        console.debug(...messages);
+    }
+}
+
+function logInfo(...message){
+    if (usePowertool){
+        logger.info(...message);
+    }
+    else {
+        console.info(...message);
+    }
+}
+
+function logError(...message){
+    if (usePowertool){
+        logger.error(...message);
+    }
+    else {
+        console.error(...message);
+    }
+}
+
+
 exports.handler = function (event, context, callback) {
-  console.log(event)
+  logDebug(event)
   if (event['requestContext']) {
     handleAction(event)
   } else if (event['Records']) {
@@ -25,7 +62,7 @@ exports.handler = function (event, context, callback) {
     statusCode: 200,
     body: JSON.stringify({ message: 'hello' })
   }
-  console.log('response', response)
+  logDebug('response', response)
   callback(null, response)
 }
 
@@ -37,25 +74,25 @@ function handleAction (event) {
   if (!isNull(request) && !isNull(request['action'])) {
     switch (request['action']) {
       case 'create':
-        console.log('create')
+        logDebug('create')
         createRoom(connectionId, request['room'])
         break
       case 'join':
-        console.log('join')
+        logDebug('join')
         joinRoom(connectionId, request['room'], domain, stage)
         break
       case 'shoot':
-        console.log('shoot')
+        logDebug('shoot')
         proceedShooting(request, connectionId, domain, stage)
         break
       default:
-        console.log('default')
+        logDebug('default')
         break
     }
   } else {
-    console.log(request)
-    console.log(isNull(request))
-    console.log(isNull(request.action))
+    logDebug(request)
+    logDebug(isNull(request))
+    logDebug(isNull(request.action))
   }
 }
 
@@ -67,21 +104,21 @@ function handleMessages (event) {
     if (!isNull(request) && !isNull(request['action'])) {
       switch (request['action']) {
         case 'newtargets':
-          console.log('new targets')
+          logDebug('new targets')
           proceedNewTargets(request.data)
           break
         case 'stop':
-          console.log('stop')
+          logDebug('stop')
           proceedStop(request.data)
           break
         default:
-          console.log('default')
+          logDebug('default')
           break
       }
     } else {
-      console.log(request)
-      console.log(isNull(request))
-      console.log(isNull(request.action))
+      logDebug(request)
+      logDebug(isNull(request))
+      logDebug(isNull(request.action))
     }
   }
 }
@@ -99,10 +136,10 @@ function proceedStop (request) {
           }),
           function (err, data) {
             if (err) {
-              console.log(err)
+              logDebug(err)
               callback(err, null)
             } else {
-              console.log(data)
+              logDebug(data)
               callback(null, data)
             }
           }
@@ -110,9 +147,11 @@ function proceedStop (request) {
       }
     ],
     function (err, result) {
-      console.log(err, result)
       if (!err) {
-        console.log('proceedStop ok')
+        logDebug('proceedStop ok')
+      }
+      else {
+        logError(err, result)
       }
     }
   )
@@ -131,10 +170,10 @@ function proceedNewTargets (request) {
           }),
           function (err, data) {
             if (err) {
-              console.log(err)
+              logDebug(err)
               callback(err, null)
             } else {
-              console.log(data)
+              logDebug(data)
               callback(null, data)
             }
           }
@@ -142,9 +181,12 @@ function proceedNewTargets (request) {
       }
     ],
     function (err, result) {
-      console.log(err, result)
+      
       if (!err) {
-        console.log('proceedNewTargets ok')
+        logDebug('proceedNewTargets ok')
+      }
+      else {
+        logError(err, result)
       }
     }
   )
@@ -158,7 +200,7 @@ function proceedShooting (request, connectionId, domain, stage) {
   // random error
   const randomNumber = Math.random();
   if (injectShootingError && randomNumber > 0.7) {
-    console.error(randomNumber, " error here!")
+    logError(randomNumber, " error here! this is the root cause. fix it")
     shootInfo["miss"] = "true"
   }
   async.waterfall(
@@ -170,10 +212,10 @@ function proceedShooting (request, connectionId, domain, stage) {
           JSON.stringify(shootInfo),
           function (err, data) {
             if (err) {
-              console.log(err)
+              logDebug(err)
               callback(err, null)
             } else {
-              console.log(data)
+              logDebug(data)
               callback(null, data)
             }
           }
@@ -181,9 +223,11 @@ function proceedShooting (request, connectionId, domain, stage) {
       }
     ],
     function (err, result) {
-      console.log(err, result)
       if (!err) {
-        console.log('proceedShooting ok')
+        logDebug('proceedShooting ok')
+      }
+      else {
+        logError(err, result)
       }
     }
   )
@@ -193,7 +237,7 @@ function createRoom (connectionId, roomName) {
   async.waterfall(
     [
       function (callback) {
-        console.log('update player table')
+        logDebug('update player table')
         updateRecord(
           ddb,
           playerTableName,
@@ -204,17 +248,17 @@ function createRoom (connectionId, roomName) {
           },
           function (err, data) {
             if (err) {
-              console.log(err)
+              logDebug(err)
               callback(err, null)
             } else {
-              console.log(data)
+              logDebug(data)
               callback(null, data)
             }
           }
         )
       },
       function (data, callback) {
-        console.log('update session table')
+        logDebug('update session table')
         updateRecord(
           ddb,
           gameSessionTableName,
@@ -224,10 +268,10 @@ function createRoom (connectionId, roomName) {
           },
           function (err, data) {
             if (err) {
-              console.log(err)
+              logDebug(err)
               callback(err, null)
             } else {
-              console.log(data)
+              logDebug(data)
               callback(null, data)
             }
           }
@@ -235,9 +279,11 @@ function createRoom (connectionId, roomName) {
       }
     ],
     function (err, result) {
-      console.log(err, result)
       if (!err) {
-        console.log('create ok')
+        logDebug('create ok')
+      }
+      else {
+        logError(err, result)
       }
     }
   )
@@ -310,7 +356,7 @@ function joinRoom (connectionId, roomName, domain, stage) {
             if (err) {
               callback(err, null)
             } else {
-              console.log('data', data.Item)
+              logDebug('data', data.Item)
               callback(null, data.Item)
             }
           }
@@ -331,9 +377,11 @@ function joinRoom (connectionId, roomName, domain, stage) {
       }
     ],
     function (err, result) {
-      console.log(err, result)
       if (!err) {
-        console.log('join ok')
+        logDebug('join ok')
+      }
+      else {
+        logError(err, result)
       }
     }
   )
@@ -398,7 +446,7 @@ function sendFifoMessage (sqs, queueUrl, message, callback) {
 }
 
 function log (...args) {
-  console.log(args)
+  logDebug(args)
 }
 
 // createRoom("12345", "yagrxu")

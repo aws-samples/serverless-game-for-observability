@@ -9,7 +9,6 @@ var returnError = false;
 
 function createCounter(){
     const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
-    const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
     const opentelemetry = require('@opentelemetry/api');
     const { Resource } = require('@opentelemetry/resources');
     const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
@@ -70,10 +69,9 @@ function updateHittingData(hits, playerId) {
 // log section
 const { Logger } = require('@aws-lambda-powertools/logger');
 
-
 const logger = new Logger({ serviceName: 'serverless-game-logic' });
 
-const usePowertool = process.env.USE_POWERTOOL == "true"? true : false;
+const usePowertool = process.env.USE_POWERTOOL == "true" ? true : false;
 console.log("powertool enabled is ", usePowertool)
 
 function logDebug(...messages){
@@ -85,21 +83,21 @@ function logDebug(...messages){
     }
 }
 
-function logInfo(message){
+function logInfo(...message){
     if (usePowertool){
-        logger.info(message);
+        logger.info(...message);
     }
     else {
-        console.info(message);
+        console.info(...message);
     }
 }
 
-function logError(message){
+function logError(...message){
     if (usePowertool){
-        logger.error(message);
+        logger.error(...message);
     }
     else {
-        console.error(message);
+        console.error(...message);
     }
 }
 
@@ -114,25 +112,18 @@ const playerTableName = process.env.PLAYER_TABLE_NAME;
 const gameSessionTableName = process.env.GAME_SESSION_TABLE_NAME;
 const defaultRegion = process.env.DEFAULT_REGION;
 const stateMachineArn = process.env.STATE_MACHINE_ARN;
-const throwError = process.env.THROW_LOGIC_ERROR == 'true'? true : false;
+const throwError = process.env.THROW_LOGIC_ERROR == 'true' ? true : false;
 const sqs = initSqs();
 const ddb = initDynamoDB();
 const sfn = initSFN();
 
-exports.handler = function (event, context) {
+exports.handler = function (event, context, callback) {
     logInfo('Welcome to the logic function');
     logDebug(event);
     records = event["Records"];
     for (let i = 0; i < records.length; i++) {
         record = records[i];
-        handleEvent(record);
-    }
-    if(returnError){
-        if (throwError) {
-            throw new Error("something went wrong!");
-        }
-        logError("something wrong!");
-        return;
+        handleEvent(record, callback);
     }
 
     const response = {
@@ -143,7 +134,7 @@ exports.handler = function (event, context) {
     return response;
 };
 
-function handleEvent(record) {
+function handleEvent(record, functionCallback) {
     logDebug("record:", record);
     body = JSON.parse(record.body);
     switch (body.action) {
@@ -161,14 +152,14 @@ function handleEvent(record) {
             break;
         case "shoot":
             logDebug("action shoot");
-            handleShoot(body);
+            handleShoot(body, functionCallback);
             break;
         default:
             break;
     }
 }
 
-function handleNewTargets(body) {
+function handleNewTargets(body, systemCallback) {
     logDebug("body", body);
     let request = body.data;
     updatedTargets = null;
@@ -228,11 +219,12 @@ function handleNewTargets(body) {
             if (!err) {
                 logDebug("create ok");
             }
+            systemCallback(err, result);
         }
     );
 }
 
-function handleShoot(body) {
+function handleShoot(body, systemCallback) {
     shootItem = body;
     logDebug(shootItem);
     updateShootingData(shootItem.connectionId);
@@ -308,6 +300,7 @@ function handleShoot(body) {
                 shootInfo.hit = shootItem.hit;
                 logDebug("shootInfo", shootInfo);
                 updateShoot(shootInfo, function (err, data) {
+                    logDebug("updateShoot done");
                     if (err) {
                         logError(err);
                         callback(err, null);
@@ -325,6 +318,14 @@ function handleShoot(body) {
             else {
                 logError(err);
             }
+            if(returnError){
+                logError("something wrong!");
+                if (throwError) {
+                    systemCallback(new Error("something went wrong!"), result)
+                    logDebug("You do not need to throw this error, and this is not the root cause");
+                }
+            }
+            systemCallback(null, result)
         }
     );
 }
@@ -337,7 +338,7 @@ function filterHit(targets, shootInfo) {
     };
     if (shootInfo["miss"] === "true") {
         returnError = true
-        logError("hit " + shootInfo["miss"]);
+        logError("miss " + shootInfo["miss"]);
         ret.targets = newTargets;
         return ret;
     }
@@ -385,7 +386,7 @@ function canHitTarget(originX, originY, angle, targetX, targetY) {
     return targetDisToPath <= laserWidth / 2 + mosWidth / 2;
 }
 
-function startGame(body) {
+function startGame(body, systemCallback) {
     body.data.targets = { S: JSON.stringify(randomTargets()) };
     body.data.status = {
         S: JSON.stringify({
@@ -461,14 +462,17 @@ function startGame(body) {
             },
         ],
         function (err, result) {
-            logError(err, result);
             if (!err) {
                 logDebug("create ok");
             }
+            else {
+                logError(err, result);
+            }
+            systemCallback(err, result);
         }
     );
 }
-function stopGame(body) {
+function stopGame(body, systemCallback) {
     async.waterfall(
         [
             function (callback) {
@@ -523,6 +527,7 @@ function stopGame(body) {
             if (!err) {
                 logDebug("create ok");
             }
+            systemCallback(err, result);
         }
     );
 }
@@ -626,7 +631,9 @@ function updateShoot(data, callback) {
     ids = data.connectionIds;
     logDebug(ids);
     items = enhanceShootInfo(ids, client, data);
+    logDebug("enhanceShootInfo");
     async.each(items, notifyShoot, function (err) {
+        logDebug("async.each");
         if (err) {
             logError(err);
             callback(err, null);
@@ -714,7 +721,7 @@ function notifyStop(item, cb) {
 }
 
 function notifyShoot(item, cb) {
-    logDebug(item);
+    // logDebug(item);
     const requestParams = {
         ConnectionId: item.id,
         Data: JSON.stringify({
@@ -732,11 +739,14 @@ function notifyShoot(item, cb) {
     };
     const command = new PostToConnectionCommand(requestParams);
     item.client.send(command, function (err, data) {
-        logDebug(err, data);
+        // logDebug(err, data);
         if (err) {
-            return cb(err, null);
+            cb(err, null);
         }
-        cb(err, data);
+        else {
+            cb(err, data);
+        }
+        
     });
 }
 

@@ -6,7 +6,7 @@ export class Constants {
     //cdk.aws_lambda.ApplicationLogLevel.DEBUG
     public static readonly logLevel  = process.env.LOG_LEVEL ? ApplicationLogLevel[process.env.LOG_LEVEL as keyof typeof ApplicationLogLevel] : ApplicationLogLevel.INFO;
     public static readonly enableXraySdk  = process.env.ENABLE_XRAY_SDK;
-    public static readonly targetsFrequency = Number(process.env.TARGETS_FREQUENCY || "10");
+    public static readonly targetsFrequency = Number(process.env.TARGETS_FREQUENCY || "6");
     public static readonly targetsPerBatch = Number(process.env.TARGETS_PER_BATCH || "10");
     public static readonly templatePrefixName = process.env.TEMPLATE_PREFIX_NAME || this.stackName;
     public static readonly fifoQueueGroupId = process.env.FIFO_QUEUE_GROUP_ID || "group1";

@@ -12,7 +12,7 @@ export class StepFunction {
     stateMachineArn:string
 
     constructor ( scope : Construct,  id: string, functionArn: string, props: any){
-        let chain = new sfn.Wait(scope, 'Wait', {time: sfn.WaitTime.duration(cdk.Duration.seconds(8))})
+        let chain = new sfn.Wait(scope, 'Wait', {time: sfn.WaitTime.duration(cdk.Duration.seconds(0))})
         .next(new tasks.LambdaInvoke(scope, 'Target', {
             lambdaFunction: lambda.Function.fromFunctionArn(scope, 'TargetsFunction', functionArn),
             outputPath: '$.Payload',

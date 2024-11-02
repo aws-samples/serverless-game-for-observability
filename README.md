@@ -27,14 +27,7 @@ Environment Variables for Cloudformation:
     export AWS_DEFAULT_REGION=us-west-2
     ```
 
-2. change deploy account (default using aws cli configured account)
-
-    ``` shell
-    # if you would like to set deploy accounnt other than the aws cli default configured one
-    export CDK_DEFAULT_ACCOUNT=12345
-    ```
-
-3. change stack name (default is "ServerlessGameDemoStack")
+2. change stack name (default is "ServerlessGameDemoStack")
 
     ``` shell
     export STACK_NAME=serverless-observability-demo
@@ -42,7 +35,7 @@ Environment Variables for Cloudformation:
 
     all resource names will start with `STACK_NAME` value by default. You can change it using `TEMPLATE_PREFIX_NAME` environment variable.
 
-4. If you have maintained a hosted zone and would like to use your own DNS for backend server.
+3. If you have maintained a hosted zone and would like to use your own DNS for backend server.
 
     ```shell
     # replace `play.awsdemo.fun` with your own sub domain.
@@ -113,7 +106,7 @@ When you change the code in lambda functions, do not forget to re-package the zi
 
 ## Go through the demo
 
-1. When you do not manipulate any environment variables. The game can be played without error. No trace is enabled, log level set to error and no custom metrics found. This mode can be used for game play in a demo expo booth.
+1. When you do not manipulate any environment variables. The game can be played without error. No trace is enabled, log level set to info and no custom metrics found. This mode can be used for game play in a demo expo booth.
 
 2. The story can be started with game with error existing (`export INJECT_SHOOTING_ERROR=true` and `export THROW_LOGIC_ERROR=true`). Game is blocked after some shots but you do not have any idea how to troubleshoot.
 
@@ -151,58 +144,6 @@ When you change the code in lambda functions, do not forget to re-package the zi
     Play the game again. Now you should see the statistics values stored in the Prometheus and visible from Grafana.
 
 9. All code changes are done and the we are almost through the demo. There is still one scenario we would like to emphasize, the manual instrumentation possibility in Lambda function. The `target` function is implemented in Golang in custom runtime. Check the code and try to understand how manual instrumentation works.
-
-### Environment Values
-
-Environment Variables:
-
-1. enable active tracing for Lambda, StepFucntion
-
-    ```shell
-    export ENABLE_XRAY=ACTIVE
-    ```
-
-2. enable X-Ray in code
-
-    ```shell
-    export ENABLE_XRAY_SDK=true
-    ```
-
-3. change log level
-
-   ```shell
-   export LOG_LEVEL=DEBUG
-   ```
-
-4. use powertool
-
-    ```shell
-    export USE_POWERTOOL=true
-    ```
-
-5. use ADOT layer
-
-    ```shell
-    export USE_ADOT_LAYER=true
-    ```
-
-6. emit metrics from logic function
-
-    ``` shell
-    export EMIT_SHOOTING_METRIC=true
-    ```
-
-7. inject logic error
-
-    ``` shell
-    export INJECT_SHOOTING_ERROR=true
-    ```
-
-8. if lambda function throw error when encounter planned issue. The game by default is injected with an error in lambda function `logic`. With the environment set as 'true'
-
-    ``` shell
-    export THROW_LOGIC_ERROR=true
-    ```
 
 ## Clean up
 

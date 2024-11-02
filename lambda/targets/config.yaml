@@ -7,8 +7,6 @@ receivers:
         endpoint: "localhost:4318"
 
 exporters:
-  logging:
-    loglevel: debug
   awsxray:
     region: ${env:AWS_REGION}
   prometheusremotewrite:
@@ -27,7 +25,7 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      exporters: [logging, prometheusremotewrite]
+      exporters: [prometheusremotewrite]
     traces:
       receivers: [otlp]
       exporters: [awsxray]
