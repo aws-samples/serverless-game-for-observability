@@ -7,3 +7,7 @@
 **/code.zip
 
 lambda/targets/bootstrap
+
+frontend/.vscode/
+frontend/web-demo/
+

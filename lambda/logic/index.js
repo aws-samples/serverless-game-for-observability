@@ -1,6 +1,7 @@
 const async = require("async");
 const AWSXRay = require("aws-xray-sdk");
-const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk')
+const AWS = process.env.ENABLE_XRAY_SDK == "true" ? AWSXRay.captureAWS(require('aws-sdk')) : require('aws-sdk') // function initDynamoDB()
+
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require("@aws-sdk/client-apigatewaymanagementapi");
 const { SFNClient, StartExecutionCommand, StopExecutionCommand } = require("@aws-sdk/client-sfn");
 const emitShootingMetric = process.env.EMIT_SHOOTING_METRIC == "true" ? true : false
@@ -13,15 +14,13 @@ function createCounter(){
     const { Resource } = require('@opentelemetry/resources');
     const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
 
-    // Set the OpenTelemetry diagnostic logger
-    // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
     const metricExporter = new OTLPMetricExporter({});
 
     // Initialize the AWS Distro for OpenTelemetry
     const meterProvider = new MeterProvider({
         resource: new Resource({
-            'service.name': 'game-logic',
+            'service.name': 'serverless-game-logic',
         }),
         readers: [new PeriodicExportingMetricReader({
             exporter: metricExporter,

@@ -4,7 +4,7 @@ export class Constants {
     public static readonly stackName = process.env.STACK_NAME || "ServerlessGameDemoStack";
     public static readonly enableXray  = process.env.ENABLE_XRAY ? Tracing[process.env.ENABLE_XRAY as keyof typeof Tracing] : Tracing.DISABLED;
     //cdk.aws_lambda.ApplicationLogLevel.DEBUG
-    public static readonly logLevel  = process.env.LOG_LEVEL ? ApplicationLogLevel[process.env.LOG_LEVEL as keyof typeof ApplicationLogLevel] : ApplicationLogLevel.INFO;
+    public static readonly logLevel  = process.env.LOG_LEVEL ? ApplicationLogLevel[process.env.LOG_LEVEL as keyof typeof ApplicationLogLevel] : ApplicationLogLevel.ERROR;
     public static readonly enableXraySdk  = process.env.ENABLE_XRAY_SDK;
     public static readonly targetsFrequency = Number(process.env.TARGETS_FREQUENCY || "6");
     public static readonly targetsPerBatch = Number(process.env.TARGETS_PER_BATCH || "10");
