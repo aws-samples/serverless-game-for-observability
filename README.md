@@ -14,7 +14,7 @@ As long as the game finished or any of the player connections disrupted, the "$d
 
 More information can be found on the architecture below and code in the repository.
 
-## Deployment
+## Serverless Backend Deployment
 
 Deployment options are documented in this section.
 
@@ -150,6 +150,23 @@ When you change the code in lambda functions, do not forget to re-package the zi
 ``` shell
 cdk destroy --all --force
 ```
+
+## [Optional] Deploy frontend Unity3D WebUI
+
+1. Setup Unity3D environment, including Unity Hub, Editor and all build dependencies.
+2. Build frontend with WebGL profile under `./frontend/web-demo` direcotry
+3. Deploy frontend via CDK under `./frontend` directory.
+
+   ``` shell
+    export STACK_NAME=serverless-game-frontend
+    # optional setup custom domain name. default uses cloudfront with S3 bucket to expose the static web GUI.
+    export CUSTOM_DOMAIN=serverless-game-frontend.awsdemo.fun
+    export AWS_DEFAULT_REGION=us-east-1
+
+    cdk deploy --require-approval never
+   ```
+
+4. Clean up with command `cdk destroy --all --force`
 
 ## Security
 
