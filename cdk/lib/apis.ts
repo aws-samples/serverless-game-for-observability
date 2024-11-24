@@ -1,9 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion, FunctionProps, IFunction, Tracing } from 'aws-cdk-lib/aws-lambda';
+import { AdotLambdaExecWrapper, AdotLambdaLayerGenericVersion, AdotLayerVersion, FunctionProps, IFunction, Tracing, LambdaInsightsVersion } from 'aws-cdk-lib/aws-lambda';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { StepFunction } from './step-functions';
 import path = require('path');
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+
 
 export class LambdaAPIs {
 
@@ -158,6 +160,9 @@ export class LambdaAPIs {
       }
     });
 
+    this.enableLambdaInsights(scope, defaultFunction, props);
+    this.enableAppSignals(scope, defaultFunction, props);
+
     // create alias for the default Function
       // new cdk.aws_lambda.Alias(scope, 'DefaultFunctionAlias', {
       //   aliasName: 'prod',
@@ -188,6 +193,9 @@ export class LambdaAPIs {
       }
     });
 
+    this.enableLambdaInsights(scope, connectFunction, props);
+    this.enableAppSignals(scope, connectFunction, props);
+
     // create disconnect function
     const disconnectFunction = new cdk.aws_lambda.Function(scope, id + '_disconnect', {
       runtime: cdk.aws_lambda.Runtime.NODEJS_LATEST,
@@ -211,6 +219,9 @@ export class LambdaAPIs {
         'USE_POWERTOOL': props.usePowertool
       }
     });
+
+    this.enableLambdaInsights(scope, disconnectFunction, props);
+    this.enableAppSignals(scope, disconnectFunction, props);
 
     let targetsProps: Record<string, any> = {
       runtime: cdk.aws_lambda.Runtime.PROVIDED_AL2023,
@@ -246,9 +257,10 @@ export class LambdaAPIs {
       targetsProps.environment['OPENTELEMETRY_COLLECTOR_CONFIG_FILE'] = '/var/task/config.yaml';
       targetsProps.environment['APS_ENDPOINT'] = props.apsEndpoint;
     }
-
     // create targets generation function
     const targetsFunction = new cdk.aws_lambda.Function(scope, id + '_targets', targetsProps as FunctionProps);
+
+    this.enableLambdaInsights(scope, targetsFunction, props);
 
     // authorizer lambda function
     const authorizerFunction = new cdk.aws_lambda.Function(scope, id + '_authorizer', {
@@ -267,6 +279,10 @@ export class LambdaAPIs {
         'USE_POWERTOOL': props.usePowertool
       }
     });
+
+    this.enableLambdaInsights(scope, authorizerFunction, props);
+    this.enableAppSignals(scope, authorizerFunction, props);
+
     defaultFunction.addEventSourceMapping('DefaultFunctionEventSourceMapping', {
       eventSourceArn: props.targetQueueArn,
       enabled: true,
@@ -320,7 +336,9 @@ export class LambdaAPIs {
       logicFunction.addEnvironment('OTEL_PROPAGATORS', 'tracecontext,baggage,xray')
       logicFunction.addEnvironment('APS_ENDPOINT', props.apsEndpoint)
     }
-    
+
+    this.enableLambdaInsights(scope, logicFunction, props);
+    this.enableAppSignals(scope, logicFunction, props);
 
     logicFunction.addEventSourceMapping('LogicFunctionEventSourceMapping', {
       eventSourceArn: props.gameQueueArn,
@@ -329,6 +347,29 @@ export class LambdaAPIs {
     })
     return logicFunction;
 
+  }
+
+  enableLambdaInsights(scope: Construct, func: cdk.aws_lambda.Function, props?: any) {
+    if (props.enableLambdaInsights) {
+      // arn:aws:lambda:us-east-1:580247275435:layer:LambdaInsightsExtension:53
+      func.addLayers(lambda.LayerVersion.fromLayerVersionArn(
+        scope,
+        func.functionName + "-insights",
+        LambdaInsightsVersion.VERSION_1_0_317_0.layerVersionArn
+      ));
+    }
+  }
+
+  enableAppSignals(scope: Construct, func: cdk.aws_lambda.Function, props?: any) {
+    if (props.enableApplicationSignals) {
+      //arn:aws:lambda:us-east-1:615299751070:layer:AWSOpenTelemetryDistroJs:5
+      func.addLayers(lambda.LayerVersion.fromLayerVersionArn(
+        scope,
+        func.functionName + "-appsignals",
+        'arn:aws:lambda:' + props.region + ':615299751070:layer:AWSOpenTelemetryDistroJs:5'
+      ));
+      func.addEnvironment('AWS_LAMBDA_EXEC_WRAPPER', '/opt/otel-instrument')
+    }
   }
 
   getFunctions(): any {

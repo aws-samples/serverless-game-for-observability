@@ -18,5 +18,7 @@ export class Constants {
     public static readonly customDomain = process.env.CUSTOM_DOMAIN || "";
     public static readonly useCustomDomain = Constants.customDomain == "" ? "false" : "true";
 
+    public static readonly enableLambdaInsights = process.env.ENABLE_LAMBDA_INSIGHTS == "" ? "false" : "true";
+    public static readonly enableApplicationSignals = process.env.ENABLE_APP_SIGNALS == "" ? "false" : "true";
 
 }

@@ -2,6 +2,9 @@
 # export STACK_NAME=serverless-observability-demo
 # export CUSTOM_DOMAIN=play.awsdemo.fun
 # export AWS_DEFAULT_REGION=us-west-2
+# export ENABLE_APP_SIGNALS=true
+# export ENABLE_XRAY=ACTIVE
+# export ENABLE_LAMBDA_INSIGHTS=true
 # server is wss://play.awsdemo.fun?Auth=123
 
 # cop408 stack default setup

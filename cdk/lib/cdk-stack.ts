@@ -41,6 +41,8 @@ export class CdkStack extends cdk.Stack {
       injectShootingError: Constants.injectShootingError,
       customDomain: Constants.customDomain,
       useCustomDomain: Constants.useCustomDomain,
+      enableLambdaInsights: Constants.enableLambdaInsights,
+      enableApplicationSignals: Constants.enableApplicationSignals
     });
     
   }
