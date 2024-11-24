@@ -350,7 +350,7 @@ export class LambdaAPIs {
   }
 
   enableLambdaInsights(scope: Construct, func: cdk.aws_lambda.Function, props?: any) {
-    if (props.enableLambdaInsights) {
+    if (props.enableLambdaInsights == "true") {
       // arn:aws:lambda:us-east-1:580247275435:layer:LambdaInsightsExtension:53
       func.addLayers(lambda.LayerVersion.fromLayerVersionArn(
         scope,
@@ -361,7 +361,7 @@ export class LambdaAPIs {
   }
 
   enableAppSignals(scope: Construct, func: cdk.aws_lambda.Function, props?: any) {
-    if (props.enableApplicationSignals) {
+    if (props.enableApplicationSignals == "true") {
       //arn:aws:lambda:us-east-1:615299751070:layer:AWSOpenTelemetryDistroJs:5
       func.addLayers(lambda.LayerVersion.fromLayerVersionArn(
         scope,

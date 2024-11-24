@@ -5,6 +5,7 @@
 # export ENABLE_APP_SIGNALS=true
 # export ENABLE_XRAY=ACTIVE
 # export ENABLE_LAMBDA_INSIGHTS=true
+# export ENABLE_XRAY_SDK=true
 # server is wss://play.awsdemo.fun?Auth=123
 
 # cop408 stack default setup
