@@ -12,6 +12,8 @@ Players connect to backend via "$connect" endpoint from API Gateway. One player 
 
 As long as the game finished or any of the player connections disrupted, the "$disconnect" endpoint will be triggerd and game data will be wriped out.
 
+![Architecture design](./serverless-game.png)
+
 More information can be found on the architecture below and code in the repository.
 
 ## Serverless Backend Deployment
