@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/contrib/detectors/aws/lambda"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
@@ -36,6 +38,7 @@ func initSDK(ctx context.Context, res *resource.Resource) (*telemetry, error) {
 		sdktrace.WithResource(res),
 		sdktrace.WithSampler(sampler),
 		sdktrace.WithBatcher(traceExporter),
+		sdktrace.WithSpanProcessor(&sqsSpanProcessor{queueURL: os.Getenv("DELAYED_QUEUE_URL")}),
 	)
 
 	metricExporter, err := otlpmetrichttp.New(ctx, otlpmetrichttp.WithEndpoint("localhost:4318"), otlpmetrichttp.WithInsecure())
@@ -67,3 +70,19 @@ func buildResource(ctx context.Context, name string, version string) (*resource.
 			semconv.ServiceVersion(version),
 		))
 }
+
+var _ trace.SpanProcessor = (*sqsSpanProcessor)(nil)
+
+type sqsSpanProcessor struct {
+	queueURL string
+}
+
+func (sp *sqsSpanProcessor) OnStart(_ context.Context, span trace.ReadWriteSpan) {
+	if span.InstrumentationLibrary().Name == "github.com/aws/aws-sdk-go-v2/service/sqs" && span.Name() == "SQS.SendMessage" {
+		// Set the "messaging.url" attribute as the awsxray exporter looks for this value to set the destination queue attribute
+		span.SetAttributes(attribute.String("messaging.url", sp.queueURL))
+	}
+}
+func (sp *sqsSpanProcessor) OnEnd(_ trace.ReadOnlySpan)         {}
+func (sp *sqsSpanProcessor) ForceFlush(_ context.Context) error { return nil }
+func (sp *sqsSpanProcessor) Shutdown(_ context.Context) error   { return nil }
